@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "393579161746",
+    "project_id": "edaproject-81b6b",
+    "storage_bucket": "edaproject-81b6b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:393579161746:android:2fc2212a58909609449e4b",
+        "android_client_info": {
+          "package_name": "com.example.eda_project"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAtzT7E_3cRoEO9KhLPxTkIN-a3m7YXlzc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:393579161746:android:f2cc480410980d9e449e4b",
+        "android_client_info": {
+          "package_name": "com.example.simpleexpense"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAtzT7E_3cRoEO9KhLPxTkIN-a3m7YXlzc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
