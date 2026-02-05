@@ -15,7 +15,6 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -28,28 +27,6 @@ class MyApp extends StatelessWidget {
         home: const LoginScreen(),
         debugShowCheckedModeBanner: false,
       ),
-    );
-  }
-}
-
-class SimpleExpense extends StatefulWidget {
-  const SimpleExpense({super.key, required this.title});
-
-  final String title;
-
-  @override
-  State<SimpleExpense> createState() => _SimpleExpenseState();
-}
-
-class _SimpleExpenseState extends State<SimpleExpense> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: const Center(child: Text('Welcome to Simple Expense App!')),
     );
   }
 }

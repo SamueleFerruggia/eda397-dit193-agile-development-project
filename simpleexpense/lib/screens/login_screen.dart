@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:simpleexpense/screens/home_screen.dart';
 import 'signup_screen.dart';
 import '../theme/app_theme.dart';
 import '../providers/auth_provider.dart';
@@ -32,6 +33,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _handleLogin() {
     if (_formKey.currentState!.validate()) {
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (context) => const HomeScreen()));
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Login successful!')));
@@ -39,7 +43,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _handleCreateAccount() {
-    // Navigate to create account screen
     Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (context) => const SignupScreen()));
