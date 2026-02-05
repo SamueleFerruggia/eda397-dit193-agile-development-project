@@ -1,6 +1,10 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'firebase_options.dart';
+import 'theme/app_theme.dart';
+import 'screens/login_screen.dart';
+import 'providers/auth_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,18 +18,22 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+    return MultiProvider(
+      providers: [ChangeNotifierProvider(create: (_) => AuthProvider())],
+      child: MaterialApp(
+        title: 'Simple Expense',
+        theme: AppTheme.lightTheme(),
+        darkTheme: AppTheme.darkTheme(),
+        themeMode: ThemeMode.light,
+        home: const LoginScreen(),
+        debugShowCheckedModeBanner: false,
       ),
-      home: SimpleExpense(title: 'Simple Expense'),
     );
   }
 }
 
 class SimpleExpense extends StatefulWidget {
-  SimpleExpense({super.key, required this.title});
+  const SimpleExpense({super.key, required this.title});
 
   final String title;
 
