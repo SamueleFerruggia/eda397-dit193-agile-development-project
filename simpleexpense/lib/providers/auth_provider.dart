@@ -4,11 +4,11 @@ import '../services/auth_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
-  
+
   // Obscure text state for password fields
   bool _obscurePassword = true;
   bool get obscurePassword => _obscurePassword;
-  
+
   bool _obscureConfirmPassword = true;
   bool get obscureConfirmPassword => _obscureConfirmPassword;
 

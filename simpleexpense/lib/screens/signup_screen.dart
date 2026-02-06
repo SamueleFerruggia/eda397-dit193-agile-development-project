@@ -51,7 +51,7 @@ class _SignupScreenState extends State<SignupScreen> {
         // Success
         Navigator.of(context).pop(); // Back to login or HomeScreen
         ScaffoldMessenger.of(context).showSnackBar(
-           const SnackBar(content: Text('Account created successfully!')),
+          const SnackBar(content: Text('Account created successfully!')),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

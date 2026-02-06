@@ -34,7 +34,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      
+
       // Login call
       String? error = await authProvider.login(
         _emailController.text.trim(),
@@ -51,10 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         // Errore
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(error),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(error), backgroundColor: Colors.red),
         );
       }
     }
