@@ -35,11 +35,29 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
-  void _handleCreateAccount() {
+  void _handleCreateAccount() async {
     if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Account created (UI only)')),
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+      String? error = await authProvider.signUp(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+        _nameController.text.trim(),
       );
+
+      if (!mounted) return;
+
+      if (error == null) {
+        // Success
+        Navigator.of(context).pop(); // Back to login or HomeScreen
+        ScaffoldMessenger.of(context).showSnackBar(
+           const SnackBar(content: Text('Account created successfully!')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
