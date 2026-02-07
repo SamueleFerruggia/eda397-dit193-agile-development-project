@@ -14,6 +14,10 @@ class AuthProvider extends ChangeNotifier {
   bool _obscureConfirmPassword = true;
   bool get obscureConfirmPassword => _obscureConfirmPassword;
 
+  String? get currentUserId => _authService.currentUser?.uid;
+  String? get currentUserEmail => _authService.currentUser?.email;
+  String? get currentUserName => _authService.currentUser?.displayName;
+
   // Loading state for async operations
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -52,8 +56,12 @@ class AuthProvider extends ChangeNotifier {
     _setLoading(true);
     try {
       // 1. Create Auth User
-      User? user = await _authService.signUp(email: email, password: password, name: name);
-      
+      User? user = await _authService.signUp(
+        email: email,
+        password: password,
+        name: name,
+      );
+
       // 2. If Auth ok, save in Database
       if (user != null) {
         await _firestoreService.saveUser(user.uid, email, name);

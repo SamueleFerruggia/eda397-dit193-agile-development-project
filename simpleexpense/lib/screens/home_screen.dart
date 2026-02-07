@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:simpleexpense/providers/auth_provider.dart';
+import 'package:simpleexpense/providers/groups_provider.dart';
+import 'package:simpleexpense/screens/group_detail_screen.dart';
 import 'package:simpleexpense/screens/login_screen.dart';
 import 'package:simpleexpense/theme/app_theme.dart';
 import 'create_group_step1.dart';
@@ -13,7 +15,12 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool hasGroups = false;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final uid = context.read<AuthProvider>().currentUserId;
+    context.read<GroupsProvider>().startListening(uid);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,73 +76,87 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
         elevation: 0,
       ),
-      body: hasGroups ? _buildGroupsView(context) : _buildEmptyView(context),
+      body: Consumer<GroupsProvider>(
+        builder: (context, groupsProvider, _) {
+          return groupsProvider.hasGroups
+              ? _buildGroupsView(context)
+              : _buildEmptyView(context);
+        },
+      ),
     );
   }
 
   Widget _buildEmptyView(BuildContext context) {
-    return Column(
-      children: [
-        // Account Header
-        Container(
-          color: Colors.grey[300],
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppTheme.lightGray,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'Account Name',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: AppTheme.darkGray,
-                ),
-              ),
-            ],
-          ),
-        ),
-        // Empty State
-        Expanded(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              GestureDetector(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const CreateGroupStep1()),
-                  );
-                },
-                child: Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: AppTheme.darkGray,
-                    borderRadius: BorderRadius.circular(8),
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        return Column(
+          children: [
+            // Account Header
+            Container(
+              color: Colors.grey[300],
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppTheme.lightGray,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                   ),
-                  child: const Icon(Icons.add, color: Colors.white, size: 40),
-                ),
+                  const SizedBox(width: 12),
+                  Text(
+                    authProvider.currentUserName ?? 'Account Name',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.darkGray,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 24),
-              const Text(
-                'Create a group',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: AppTheme.darkGray,
-                ),
+            ),
+            // Empty State
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => CreateGroupStep1()),
+                      );
+                    },
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: AppTheme.darkGray,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.add,
+                        color: Colors.white,
+                        size: 40,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Create a group',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.darkGray,
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -163,12 +184,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Account Name',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: AppTheme.darkGray,
+                      Consumer<AuthProvider>(
+                        builder: (context, authProvider, _) => Text(
+                          authProvider.currentUserName ?? 'Account Name',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: AppTheme.darkGray,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -187,49 +210,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
-        // Groups List
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(0),
-            itemCount: 2,
-            itemBuilder: (context, index) {
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-
-                color: Colors.white,
-                margin: const EdgeInsets.symmetric(vertical: 0.5),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Group Name',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: AppTheme.darkGray,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '0 SEK',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          color: AppTheme.middleGray,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
+        _buildGroupsList(context),
         // Bottom Bar
         Container(
           color: Colors.white,
@@ -270,9 +251,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: const Icon(Icons.add, color: Colors.white),
                   onPressed: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const CreateGroupStep1(),
-                      ),
+                      MaterialPageRoute(builder: (_) => CreateGroupStep1()),
                     );
                   },
                 ),
@@ -281,6 +260,98 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildGroupsList(BuildContext context) {
+    return Consumer<GroupsProvider>(
+      builder: (context, groupsProvider, _) {
+        final groups = groupsProvider.groups;
+        return Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.all(0),
+            itemCount: groups.length,
+            itemBuilder: (context, index) {
+              final group = groups[index];
+              final name = group['groupName'] as String? ?? 'Group';
+              final currency = group['currency'] as String? ?? 'SEK';
+              return GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => GroupDetailScreen(group: group),
+                    ),
+                  );
+                },
+                child: Container(
+                  margin: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.06),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Container(
+                          width: 10,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade300,
+                            borderRadius: const BorderRadius.horizontal(
+                              left: Radius.circular(2),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  name,
+                                  style: const TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF333333),
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  '0 $currency',
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w400,
+                                    color: Color(0xFF333333),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }

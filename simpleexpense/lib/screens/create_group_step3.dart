@@ -52,6 +52,7 @@ class _CreateGroupStep3State extends State<CreateGroupStep3> {
           backgroundColor: Colors.green,
         ),
       );
+      Navigator.of(context).popUntil((route) => route.isFirst);
     } catch (e) {
       if (!mounted) return;
       // Error management
@@ -122,8 +123,8 @@ class _CreateGroupStep3State extends State<CreateGroupStep3> {
                           DropdownMenuItem(value: 'EUR', child: Text('EUR')),
                         ],
                         // Disable the change value when creating the group
-                        onChanged: _isCreating 
-                            ? null 
+                        onChanged: _isCreating
+                            ? null
                             : (v) {
                                 if (v != null) setState(() => _currency = v);
                               },

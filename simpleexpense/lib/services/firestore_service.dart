@@ -38,15 +38,35 @@ class FirestoreService {
       'inviteCode': inviteCode,
       'currency': currency,
       'members': [creatorId], // admin is the first member of the group
-      'invitedEmails': invitedEmails, // Save the list of invited emails for later processing
+      'invitedEmails':
+          invitedEmails, // Save the list of invited emails for later processing
       'createdAt': FieldValue.serverTimestamp(),
     });
+  }
+
+  /// Stream of groups where the user is a member. Returns empty list when uid is null/empty.
+  Stream<List<Map<String, dynamic>>> streamUserGroups(String? uid) {
+    if (uid == null || uid.isEmpty) {
+      return Stream.value([]);
+    }
+    return _db
+        .collection('groups')
+        .where('members', arrayContains: uid)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs.map((doc) {
+            final data = doc.data();
+            data['groupId'] = doc.id;
+            return data;
+          }).toList(),
+        );
   }
 
   String _generateInviteCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     Random rnd = Random();
-    return String.fromCharCodes(Iterable.generate(
-        6, (_) => chars.codeUnitAt(rnd.nextInt(chars.length))));
+    return String.fromCharCodes(
+      Iterable.generate(6, (_) => chars.codeUnitAt(rnd.nextInt(chars.length))),
+    );
   }
 }
