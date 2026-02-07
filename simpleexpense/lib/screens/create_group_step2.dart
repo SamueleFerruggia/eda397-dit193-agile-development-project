@@ -121,6 +121,7 @@ class _CreateGroupStep2State extends State<CreateGroupStep2> {
             padding: const EdgeInsets.all(16),
             child: SizedBox(
               height: 52,
+
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.darkGray,

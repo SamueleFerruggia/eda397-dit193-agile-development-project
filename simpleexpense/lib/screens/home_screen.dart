@@ -78,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         // Account Header
         Container(
-          color: Colors.white,
+          color: Colors.grey[300],
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: Row(
             children: [
@@ -144,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         // Account Header with Balance
         Container(
-          color: Colors.white,
+          color: Colors.grey[300],
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -167,7 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         'Account Name',
                         style: TextStyle(
                           fontSize: 14,
-                          fontWeight: FontWeight.w400,
+                          fontWeight: FontWeight.w500,
                           color: AppTheme.darkGray,
                         ),
                       ),
@@ -194,6 +194,11 @@ class _HomeScreenState extends State<HomeScreen> {
             itemCount: 2,
             itemBuilder: (context, index) {
               return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+
                 color: Colors.white,
                 margin: const EdgeInsets.symmetric(vertical: 0.5),
                 child: const Padding(
