@@ -1,9 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
+import '../services/firestore_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
+  final FirestoreService _firestoreService = FirestoreService();
 
   // Obscure text state for password fields
   bool _obscurePassword = true;
@@ -49,7 +51,14 @@ class AuthProvider extends ChangeNotifier {
   Future<String?> signUp(String email, String password, String name) async {
     _setLoading(true);
     try {
-      await _authService.signUp(email: email, password: password, name: name);
+      // 1. Create Auth User
+      User? user = await _authService.signUp(email: email, password: password, name: name);
+      
+      // 2. If Auth ok, save in Database
+      if (user != null) {
+        await _firestoreService.saveUser(user.uid, email, name);
+      }
+
       _setLoading(false);
       return null; // Success
     } catch (e) {
