@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:simpleexpense/theme/app_theme.dart';
+import '../services/firestore_service.dart';
 
 class CreateGroupStep3 extends StatefulWidget {
-  const CreateGroupStep3({super.key});
+  final String groupName;
+  final List<String> invitedMembers;
+
+  const CreateGroupStep3({
+    super.key,
+    required this.groupName,
+    required this.invitedMembers,
+  });
 
   @override
   State<CreateGroupStep3> createState() => _CreateGroupStep3State();
@@ -10,6 +19,54 @@ class CreateGroupStep3 extends StatefulWidget {
 
 class _CreateGroupStep3State extends State<CreateGroupStep3> {
   String _currency = 'SEK';
+  bool _isCreating = false; // State to manage the creation process
+  final FirestoreService _firestoreService = FirestoreService();
+
+  // Handles the save to Firebase
+  void _handleCreateGroup() async {
+    setState(() => _isCreating = true);
+
+    try {
+      // 1. Obtain the current agent (it will be the admin)
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception("User not logged in");
+      }
+
+      // 2. Call the database to create the group with all the collected data
+      await _firestoreService.createGroup(
+        groupName: widget.groupName,
+        creatorId: user.uid,
+        invitedEmails: widget.invitedMembers,
+        currency: _currency,
+      );
+
+      if (!mounted) return;
+
+      // 3. Success: Back to home screen
+      Navigator.of(context).popUntil((route) => route.isFirst);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Group created successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      // Error management
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error creating group: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isCreating = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +85,8 @@ class _CreateGroupStep3State extends State<CreateGroupStep3> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.of(context).pop(),
+          // Disable the back button during group creation to prevent navigation issues
+          onPressed: _isCreating ? null : () => Navigator.of(context).pop(),
         ),
       ),
       body: Column(
@@ -63,9 +121,12 @@ class _CreateGroupStep3State extends State<CreateGroupStep3> {
                           DropdownMenuItem(value: 'USD', child: Text('USD')),
                           DropdownMenuItem(value: 'EUR', child: Text('EUR')),
                         ],
-                        onChanged: (v) {
-                          if (v != null) setState(() => _currency = v);
-                        },
+                        // Disable the change value when creating the group
+                        onChanged: _isCreating 
+                            ? null 
+                            : (v) {
+                                if (v != null) setState(() => _currency = v);
+                              },
                       ),
                     ),
                   ),
@@ -79,7 +140,6 @@ class _CreateGroupStep3State extends State<CreateGroupStep3> {
               ),
             ),
           ),
-
           Container(
             padding: const EdgeInsets.all(16),
             child: SizedBox(
@@ -88,10 +148,18 @@ class _CreateGroupStep3State extends State<CreateGroupStep3> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.darkGray,
                 ),
-                child: const Text('Done!', style: TextStyle(fontSize: 16)),
-                onPressed: () {
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                },
+                // Disable the button during saving
+                onPressed: _isCreating ? null : _handleCreateGroup,
+                child: _isCreating
+                    ? const SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text('Done!', style: TextStyle(fontSize: 16)),
               ),
             ),
           ),

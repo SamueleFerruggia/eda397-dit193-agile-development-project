@@ -128,9 +128,14 @@ class _CreateGroupStep2State extends State<CreateGroupStep2> {
                 ),
                 child: const Text('Next', style: TextStyle(fontSize: 16)),
                 onPressed: () {
-                  Navigator.of(
-                    context,
-                  ).push(MaterialPageRoute(builder: (_) => CreateGroupStep3()));
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => CreateGroupStep3(
+                        groupName: widget.groupName, // Pass the name
+                        invitedMembers: _members,    // Pass the collected members
+                      ),
+                    ),
+                  );
                 },
               ),
             ),
