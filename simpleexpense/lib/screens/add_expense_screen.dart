@@ -3,14 +3,14 @@ import 'package:provider/provider.dart';
 import 'package:simpleexpense/providers/groups_provider.dart';
 import 'package:simpleexpense/theme/app_theme.dart';
 
-class AddExpenseStep1 extends StatefulWidget {
-  const AddExpenseStep1({super.key});
+class AddExpenseScreen extends StatefulWidget {
+  const AddExpenseScreen({super.key});
 
   @override
-  State<AddExpenseStep1> createState() => _AddExpenseStep1State();
+  State<AddExpenseScreen> createState() => _AddExpenseScreenState();
 }
 
-class _AddExpenseStep1State extends State<AddExpenseStep1> {
+class _AddExpenseScreenState extends State<AddExpenseScreen> {
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
   String _paidBy = 'Me';
