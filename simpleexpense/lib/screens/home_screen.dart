@@ -279,7 +279,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => GroupDetailScreen(group: group),
+                      builder: (_) => GroupDetailScreen(
+                        groupId: group['groupId'] as String? ?? '',
+                      ),
                     ),
                   );
                 },

@@ -12,6 +12,47 @@ class GroupsProvider extends ChangeNotifier {
 
   StreamSubscription<List<Map<String, dynamic>>>? _subscription;
   String? _currentUid;
+  String? get currentUid => _currentUid;
+
+  String? _selectedGroupId;
+
+  /// Get the currently selected group, or the first group if none selected
+  Map<String, dynamic>? get selectedGroup {
+    if (_groups.isEmpty) return null;
+    if (_selectedGroupId != null) {
+      try {
+        return _groups.firstWhere(
+          (g) => (g['groupId'] as String?) == _selectedGroupId,
+        );
+      } catch (e) {
+        // If selected group not found, return first group
+        return _groups.first;
+      }
+    }
+    return _groups.first;
+  }
+
+  String? get currentInviteCode {
+    return selectedGroup?['inviteCode'] as String?;
+  }
+
+  String? get currentGroupId {
+    return selectedGroup?['groupId'] as String?;
+  }
+
+  String? get currentGroupName {
+    return selectedGroup?['groupName'] as String?;
+  }
+
+  String? get currentCurrency {
+    return selectedGroup?['currency'] as String?;
+  }
+
+  /// Select a specific group by ID
+  void selectGroup(String groupId) {
+    _selectedGroupId = groupId;
+    notifyListeners();
+  }
 
   /// Start listening to groups for the given user. Call with null to stop and clear.
   /// No-op if already listening to the same uid.
