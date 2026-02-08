@@ -95,8 +95,9 @@ class _CreateGroupStep2State extends State<CreateGroupStep2> {
                       validator: (value) {
                         final email = value?.trim() ?? '';
                         if (email.isEmpty) return null;
-                        if (!_emailRegex.hasMatch(email))
+                        if (!_emailRegex.hasMatch(email)) {
                           return 'Enter a valid email';
+                        }
                         if (_members.contains(email)) return 'Already added';
                         return null;
                       },

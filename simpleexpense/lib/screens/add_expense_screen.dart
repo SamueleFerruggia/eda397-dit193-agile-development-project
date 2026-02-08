@@ -48,7 +48,8 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         builder: (_) => ExpenseSplitScreen(
           description: description,
           amount: amount,
-          payerId: _paidBy, // We will resolve 'Me' to actual UID in the split screen
+          payerId:
+              _paidBy, // We will resolve 'Me' to actual UID in the split screen
         ),
       ),
     );
@@ -61,12 +62,20 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     return Scaffold(
       backgroundColor: AppTheme.lightGray,
       appBar: AppBar(
-        title: const Text('Add expense', style: TextStyle(color: AppTheme.darkGray)),
         backgroundColor: AppTheme.lightGray,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppTheme.darkGray),
           onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text(
+          'Add Expense',
+          style: TextStyle(
+            color: AppTheme.darkGray,
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.5,
+          ),
         ),
       ),
       body: Column(
@@ -79,23 +88,15 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                   const Text(
-                    'Add expense',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.darkGray,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
                   TextField(
                     controller: _descriptionController,
                     decoration: InputDecoration(
                       hintText: 'What is this for?',
                       filled: true,
                       fillColor: AppTheme.white,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -104,21 +105,34 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       Expanded(
                         child: TextField(
                           controller: _amountController,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
                           decoration: InputDecoration(
                             hintText: '0.00',
                             filled: true,
                             fillColor: AppTheme.white,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Text(currency, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      Text(
+                        currency,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 24),
-                  const Text('Paid by', style: TextStyle(fontWeight: FontWeight.w500)),
+                  const Text(
+                    'Paid by',
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -130,7 +144,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       value: _paidBy,
                       isExpanded: true,
                       underline: const SizedBox.shrink(),
-                      items: const [DropdownMenuItem(value: 'Me', child: Text('Me'))],
+                      items: const [
+                        DropdownMenuItem(value: 'Me', child: Text('Me')),
+                      ],
                       onChanged: (val) => setState(() => _paidBy = val!),
                     ),
                   ),
@@ -147,9 +163,14 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                 onPressed: _handleNext, // Call Next
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.darkGray,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
-                child: const Text('Next', style: TextStyle(fontSize: 16, color: Colors.white)),
+                child: const Text(
+                  'Next',
+                  style: TextStyle(fontSize: 16, color: Colors.white),
+                ),
               ),
             ),
           ),

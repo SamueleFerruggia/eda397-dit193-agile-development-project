@@ -62,6 +62,37 @@ class FirestoreService {
         );
   }
 
+  /// Join a group using the invite code. Throws an exception if the code is invalid or user is already a member.
+  Future<void> joinGroupByCode({
+    required String uid,
+    required String inviteCode,
+  }) async {
+    // Find the group with the matching invite code
+    final querySnapshot = await _db
+        .collection('groups')
+        .where('inviteCode', isEqualTo: inviteCode.toUpperCase())
+        .limit(1)
+        .get();
+
+    if (querySnapshot.docs.isEmpty) {
+      throw Exception('Invalid invite code. Please check and try again.');
+    }
+
+    final groupDoc = querySnapshot.docs.first;
+    final groupId = groupDoc.id;
+    final members = List<String>.from(groupDoc['members'] as List? ?? []);
+
+    // Check if user is already a member
+    if (members.contains(uid)) {
+      throw Exception('You are already a member of this group.');
+    }
+
+    // Add user to the group's members list
+    await _db.collection('groups').doc(groupId).update({
+      'members': FieldValue.arrayUnion([uid]),
+    });
+  }
+
   String _generateInviteCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     Random rnd = Random();
@@ -79,16 +110,88 @@ class FirestoreService {
     required double amount,
     required String payerId,
   }) async {
-    // Add the document to the 'expenses' sub-collection of the group
-    await _db
-        .collection('groups')
-        .doc(groupId)
-        .collection('expenses')
-        .add({
+    await _db.collection('groups').doc(groupId).collection('expenses').add({
       'description': description,
       'amount': amount,
       'payerId': payerId,
       'timestamp': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Updates an existing expense (description, amount, payerId).
+  Future<void> updateExpense({
+    required String groupId,
+    required String expenseId,
+    required String description,
+    required double amount,
+    required String payerId,
+  }) async {
+    await _db
+        .collection('groups')
+        .doc(groupId)
+        .collection('expenses')
+        .doc(expenseId)
+        .update({
+          'description': description,
+          'amount': amount,
+          'payerId': payerId,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+  }
+
+  /// Get total balance for a group (sum of all expenses)
+  Future<double> getGroupTotalBalance(String groupId) async {
+    try {
+      final snapshot = await _db
+          .collection('groups')
+          .doc(groupId)
+          .collection('expenses')
+          .get();
+
+      double total = 0;
+      for (var doc in snapshot.docs) {
+        final amount = doc['amount'] as num? ?? 0;
+        total += amount.toDouble();
+      }
+      return total;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  /// Stream of total balance for a group
+  Stream<double> streamGroupTotalBalance(String groupId) {
+    return _db
+        .collection('groups')
+        .doc(groupId)
+        .collection('expenses')
+        .snapshots()
+        .map((snapshot) {
+          double total = 0;
+          for (var doc in snapshot.docs) {
+            final amount = doc['amount'] as num? ?? 0;
+            total += amount.toDouble();
+          }
+          return total;
+        });
+  }
+
+  /// Get total members count for a group
+  Future<int> getGroupMembersCount(String groupId) async {
+    try {
+      final doc = await _db.collection('groups').doc(groupId).get();
+      final members = doc['members'] as List? ?? [];
+      return members.length;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  /// Stream of members for a group
+  Stream<int> streamGroupMembersCount(String groupId) {
+    return _db.collection('groups').doc(groupId).snapshots().map((doc) {
+      final members = doc['members'] as List? ?? [];
+      return members.length;
     });
   }
 }

@@ -16,6 +16,8 @@ class GroupDetailScreen extends StatefulWidget {
 }
 
 class _GroupDetailScreenState extends State<GroupDetailScreen> {
+  String _sortType = 'Description'; // 'Description' or 'People'
+
   @override
   void initState() {
     super.initState();
@@ -123,36 +125,82 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
         // 4. Data Exists -> Show List + Bottom Bar
         final expenses = snapshot.data!.docs;
 
+        // Calculate total balance
+        double totalBalance = 0;
+        for (var expense in expenses) {
+          final data = expense.data() as Map<String, dynamic>;
+          final amount = data['amount'] as num? ?? 0;
+          totalBalance += amount.toDouble();
+        }
+
+        // Create list of expenses
+        List<Map<String, dynamic>> expensesList = [];
+        for (var expense in expenses) {
+          final data = expense.data() as Map<String, dynamic>;
+          expensesList.add({
+            'id': expense.id,
+            'description': data['description'] ?? 'No description',
+            'amount': data['amount'] ?? 0,
+            'payerId': data['payerId'] ?? 'Unknown',
+            'timestamp': data['timestamp'],
+          });
+        }
+
+        // Sort expenses based on selected sort type
+        _sortExpenses(expensesList);
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Expenses list
             Expanded(
               child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                itemCount: expenses.length,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
+                itemCount: expensesList.length,
                 itemBuilder: (context, index) {
-                  final data = expenses[index].data() as Map<String, dynamic>;
-                  final description = data['description'] ?? 'No description';
-                  final amount = data['amount']?.toString() ?? '0';
+                  final expense = expensesList[index];
+                  final description = expense['description'] as String;
+                  final amount = expense['amount'].toString();
+                  final currency = groupsProvider.currentCurrency ?? 'SEK';
 
-                  return _buildExpenseItem(
-                    description,
-                    '$amount ${groupsProvider.currentCurrency}',
-                  );
+                  return _buildExpenseItem(description, '$amount $currency');
                 },
               ),
             ),
             // Bottom bar with sort and add button
-            _buildBottomBar(context),
+            _buildBottomBar(context, totalBalance, groupsProvider),
           ],
         );
       },
     );
   }
 
+  /// Sort expenses based on the selected sort type
+  void _sortExpenses(List<Map<String, dynamic>> expenses) {
+    if (_sortType == 'Description') {
+      expenses.sort((a, b) {
+        final descA = a['description'] as String;
+        final descB = b['description'] as String;
+        return descA.compareTo(descB);
+      });
+    } else if (_sortType == 'People') {
+      expenses.sort((a, b) {
+        final payerA = a['payer'] as String;
+        final payerB = b['payer'] as String;
+        return payerA.compareTo(payerB);
+      });
+    }
+  }
+
   /// extracted Bottom Bar widget for cleaner code
-  Widget _buildBottomBar(BuildContext context) {
+  Widget _buildBottomBar(
+    BuildContext context,
+    double totalBalance,
+    GroupsProvider groupsProvider,
+  ) {
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -160,31 +208,38 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
         children: [
           Expanded(
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: AppTheme.lightGray,
                 borderRadius: BorderRadius.circular(4),
               ),
               child: DropdownButton<String>(
-                value: 'Description / People',
+                value: _sortType,
                 isExpanded: true,
                 underline: const SizedBox.shrink(),
                 items: [
                   DropdownMenuItem(
-                    value: 'Description / People',
+                    value: 'Description',
                     child: Text(
-                      'Description / People',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppTheme.darkGray,
-                      ),
+                      'Sort by Description',
+                      style: TextStyle(fontSize: 14, color: AppTheme.darkGray),
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: 'People',
+                    child: Text(
+                      'Sort by People',
+                      style: TextStyle(fontSize: 14, color: AppTheme.darkGray),
                     ),
                   ),
                 ],
-                onChanged: null, // Placeholder for sorting logic
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _sortType = value;
+                    });
+                  }
+                },
               ),
             ),
           ),
@@ -221,7 +276,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
             color: Colors.black.withOpacity(0.05),
             offset: const Offset(0, 2),
             blurRadius: 4,
-          )
+          ),
         ],
       ),
       padding: const EdgeInsets.all(12),
@@ -348,7 +403,6 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(color: AppTheme.lightGray),
-                // Placeholder for Group Image
               ),
               const SizedBox(width: 12),
               Column(
@@ -364,7 +418,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '0 ${groupsProvider.currentCurrency ?? 'SEK'}',
+                    '${groupsProvider.currentGroupTotalBalance.toStringAsFixed(2)} ${groupsProvider.currentCurrency ?? 'SEK'}',
                     style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -381,10 +435,8 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   }
 
   void _navigateToAddExpense(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const AddExpenseScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const AddExpenseScreen()));
   }
 }

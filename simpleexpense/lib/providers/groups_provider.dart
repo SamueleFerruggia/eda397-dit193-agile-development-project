@@ -10,6 +10,10 @@ class GroupsProvider extends ChangeNotifier {
 
   bool get hasGroups => _groups.isNotEmpty;
 
+  // Store for group balances and members
+  final Map<String, double> _groupBalances = {};
+  final Map<String, int> _groupMembers = {};
+
   StreamSubscription<List<Map<String, dynamic>>>? _subscription;
   String? _currentUid;
   String? get currentUid => _currentUid;
@@ -48,6 +52,28 @@ class GroupsProvider extends ChangeNotifier {
     return selectedGroup?['currency'] as String?;
   }
 
+  /// Get total balance for the currently selected group
+  double get currentGroupTotalBalance {
+    final groupId = currentGroupId;
+    return groupId != null ? _groupBalances[groupId] ?? 0 : 0;
+  }
+
+  /// Get total members for the currently selected group
+  int get currentGroupMembers {
+    final groupId = currentGroupId;
+    return groupId != null ? _groupMembers[groupId] ?? 0 : 0;
+  }
+
+  /// Get total balance for a specific group by ID
+  double getGroupBalance(String groupId) {
+    return _groupBalances[groupId] ?? 0;
+  }
+
+  /// Get total members for a specific group by ID
+  int getGroupMemberCount(String groupId) {
+    return _groupMembers[groupId] ?? 0;
+  }
+
   /// Select a specific group by ID
   void selectGroup(String groupId) {
     _selectedGroupId = groupId;
@@ -65,14 +91,44 @@ class GroupsProvider extends ChangeNotifier {
 
     if (uid == null || uid.isEmpty) {
       _groups = [];
+      _groupBalances.clear();
+      _groupMembers.clear();
       notifyListeners();
       return;
     }
 
     _subscription = _firestoreService.streamUserGroups(uid).listen((list) {
       _groups = list;
+
+      // Subscribe to balance and members streams for each group
+      for (var group in _groups) {
+        final groupId = group['groupId'] as String?;
+        if (groupId != null) {
+          _firestoreService.streamGroupTotalBalance(groupId).listen((balance) {
+            _groupBalances[groupId] = balance;
+            notifyListeners();
+          });
+
+          _firestoreService.streamGroupMembersCount(groupId).listen((count) {
+            _groupMembers[groupId] = count;
+            notifyListeners();
+          });
+        }
+      }
+
       notifyListeners();
     });
+  }
+
+  /// Join a group using invite code
+  Future<void> joinGroupByCode({
+    required String uid,
+    required String inviteCode,
+  }) async {
+    await _firestoreService.joinGroupByCode(uid: uid, inviteCode: inviteCode);
+
+    // Refresh the groups list after joining
+    startListening(uid);
   }
 
   void stopListening() {

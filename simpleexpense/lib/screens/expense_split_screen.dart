@@ -23,7 +23,7 @@ class ExpenseSplitScreen extends StatefulWidget {
 
 class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
   bool _isLoading = false;
-  
+
   // In future, we will support different split types (equally, by percentage, exact amounts)
   // For now, we will just implement "Split Equally" with checkboxes to include
   Set<String> _selectedMemberIds = {};
@@ -33,7 +33,9 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
     super.initState();
     // Select the members of the current group to initialize the checkboxes
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final members = context.read<GroupsProvider>().selectedGroup?['members'] as List<dynamic>?;
+      final members =
+          context.read<GroupsProvider>().selectedGroup?['members']
+              as List<dynamic>?;
       if (members != null) {
         setState(() {
           _selectedMemberIds = members.map((e) => e.toString()).toSet();
@@ -50,10 +52,13 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
       final groupId = groupsProvider.currentGroupId;
       final currentUser = FirebaseAuth.instance.currentUser;
 
-      if (groupId == null || currentUser == null) throw Exception("Error info missing");
+      if (groupId == null || currentUser == null)
+        throw Exception("Error info missing");
 
       // Resolve who is the actual payer (if 'Me', use current user's UID)
-      final actualPayerId = widget.payerId == 'Me' ? currentUser.uid : widget.payerId;
+      final actualPayerId = widget.payerId == 'Me'
+          ? currentUser.uid
+          : widget.payerId;
 
       await FirestoreService().addExpense(
         groupId: groupId,
@@ -64,11 +69,14 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
 
       if (!mounted) return;
       // Back to the main screen (pop twice: first pop the split screen, then pop the add expense screen)
-      Navigator.of(context).pop(); 
-      Navigator.of(context).pop(); 
-      
+      Navigator.of(context).pop();
+      Navigator.of(context).pop();
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Expense saved!'), backgroundColor: Colors.green),
+        const SnackBar(
+          content: Text('Expense saved!'),
+          backgroundColor: Colors.green,
+        ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -83,19 +91,23 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
   Widget build(BuildContext context) {
     final groupsProvider = context.watch<GroupsProvider>();
     final currency = groupsProvider.currentCurrency ?? 'SEK';
-    
+
     // Member's list of the currently selected group
-    final members = groupsProvider.selectedGroup?['members'] as List<dynamic>? ?? [];
+    final members =
+        groupsProvider.selectedGroup?['members'] as List<dynamic>? ?? [];
 
     // Calculate division (Equally)
-    final splitAmount = _selectedMemberIds.isEmpty 
-        ? 0.0 
+    final splitAmount = _selectedMemberIds.isEmpty
+        ? 0.0
         : widget.amount / _selectedMemberIds.length;
 
     return Scaffold(
       backgroundColor: AppTheme.lightGray,
       appBar: AppBar(
-        title: const Text('Add expense', style: TextStyle(color: AppTheme.darkGray)),
+        title: const Text(
+          'Add expense',
+          style: TextStyle(color: AppTheme.darkGray),
+        ),
         backgroundColor: AppTheme.lightGray,
         elevation: 0,
         leading: IconButton(
@@ -117,21 +129,29 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                   ),
                   Text(
                     '${widget.amount.toStringAsFixed(2)} $currency',
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // Members list with checkboxes to include in the split
                   Expanded(
                     child: ListView.builder(
                       itemCount: members.length,
                       itemBuilder: (context, index) {
                         final memberId = members[index].toString();
-                        // Here we should ideally fetch the user's name using the memberId, 
+                        // Here we should ideally fetch the user's name using the memberId,
                         //but for simplicity we'll just show "Me" or a placeholder
-                        final isMe = memberId == FirebaseAuth.instance.currentUser?.uid;
-                        final displayName = isMe ? "Me" : "User...${memberId.substring(0,4)}"; 
-                        final isSelected = _selectedMemberIds.contains(memberId);
+                        final isMe =
+                            memberId == FirebaseAuth.instance.currentUser?.uid;
+                        final displayName = isMe
+                            ? "Me"
+                            : "User...${memberId.substring(0, 4)}";
+                        final isSelected = _selectedMemberIds.contains(
+                          memberId,
+                        );
 
                         return Container(
                           margin: const EdgeInsets.only(bottom: 8),
@@ -145,10 +165,12 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                               children: [
                                 Text(displayName),
                                 Text(
-                                  isSelected 
-                                    ? '${splitAmount.toStringAsFixed(0)} $currency'
-                                    : '0 $currency',
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                  isSelected
+                                      ? '${splitAmount.toStringAsFixed(0)} $currency'
+                                      : '0 $currency',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ],
                             ),
@@ -174,8 +196,11 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                     children: [
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () {}, 
-                          child: const Text('Split equally', style: TextStyle(color: Colors.black)),
+                          onPressed: () {},
+                          child: const Text(
+                            'Split equally',
+                            style: TextStyle(color: Colors.black),
+                          ),
                         ),
                       ),
                     ],
@@ -185,7 +210,7 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
               ),
             ),
           ),
-          
+
           // SAVE button
           Container(
             padding: const EdgeInsets.all(24),
@@ -196,11 +221,16 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                 onPressed: _isLoading ? null : _handleSave,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.darkGray,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
-                child: _isLoading 
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text('Save', style: TextStyle(fontSize: 16, color: Colors.white)),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                        'Save',
+                        style: TextStyle(fontSize: 16, color: Colors.white),
+                      ),
               ),
             ),
           ),
