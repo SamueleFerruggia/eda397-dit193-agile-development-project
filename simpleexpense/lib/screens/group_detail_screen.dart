@@ -1,10 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:simpleexpense/providers/groups_provider.dart';
 import 'package:simpleexpense/screens/add_expense_screen.dart';
+import 'package:simpleexpense/screens/expense_detail_screen.dart';
 import 'package:simpleexpense/theme/app_theme.dart';
+import 'package:simpleexpense/screens/widgets/expense_widgets.dart';
 
 class GroupDetailScreen extends StatefulWidget {
   final String groupId;
@@ -16,12 +17,11 @@ class GroupDetailScreen extends StatefulWidget {
 }
 
 class _GroupDetailScreenState extends State<GroupDetailScreen> {
-  String _sortType = 'Description'; // 'Description' or 'People'
+  String _sortType = 'Description';
 
   @override
   void initState() {
     super.initState();
-    // Select the current group in the provider when the screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<GroupsProvider>().selectGroup(widget.groupId);
     });
@@ -29,130 +29,104 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.darkGray,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(context),
-            _buildGroupInfo(context),
-            // Main content area
-            Expanded(
-              child: Consumer<GroupsProvider>(
-                builder: (context, groupsProvider, child) {
-                  return Container(
+    return Consumer<GroupsProvider>(
+      builder: (context, groupsProvider, child) {
+        final isGroupLoaded =
+            groupsProvider.currentGroupId == widget.groupId &&
+            groupsProvider.selectedGroup != null;
+
+        if (!isGroupLoaded) {
+          return Scaffold(
+            backgroundColor: AppTheme.darkGray,
+            body: SafeArea(
+              child: Center(
+                child: CircularProgressIndicator(color: AppTheme.white),
+              ),
+            ),
+          );
+        }
+
+        return Scaffold(
+          backgroundColor: AppTheme.darkGray,
+          body: SafeArea(
+            child: Column(
+              children: [
+                const ExpenseHeaderWidget(),
+                const GroupInfoWidget(),
+                // Main content area
+                Expanded(
+                  child: Container(
                     width: double.infinity,
                     decoration: const BoxDecoration(color: AppTheme.white),
-                    // We delegate the logic (Empty vs List) to the _buildExpensesView
                     child: _buildExpensesView(context, groupsProvider),
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
-  /// Displays the empty state with a big Add button
-  Widget _buildEmptyView() {
-    return GestureDetector(
-      onTap: () => _navigateToAddExpense(context),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: AppTheme.darkGray,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.add, color: AppTheme.white, size: 40),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Add Expense',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: AppTheme.darkGray,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Logic to fetch real data from Firestore
   Widget _buildExpensesView(
     BuildContext context,
     GroupsProvider groupsProvider,
   ) {
-    final groupId = groupsProvider.currentGroupId;
-
-    // Safety check
-    if (groupId == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('groups')
-          .doc(groupId)
+          .doc(groupsProvider.currentGroupId)
           .collection('expenses')
           .orderBy('timestamp', descending: true)
           .snapshots(),
       builder: (context, snapshot) {
-        // 1. Loading
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        // 2. Error
-        if (snapshot.hasError) {
-          return Center(child: Text("Error: ${snapshot.error}"));
+        final expensesList = snapshot.data!.docs.map((doc) {
+          return {
+            'description': doc['description'] ?? '',
+            'amount': doc['amount'] ?? 0.0,
+            'payer': doc['payerId'] ?? '',
+          };
+        }).toList();
+
+        if (expensesList.isEmpty) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              GestureDetector(
+                onTap: () => _navigateToAddExpense(context),
+                child: Container(
+                  width: 70,
+                  height: 70,
+                  decoration: BoxDecoration(color: AppTheme.darkGray),
+                  child: const Icon(Icons.add, color: AppTheme.white, size: 60),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                ' Add Expense',
+                style: TextStyle(
+                  color: AppTheme.darkGray,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          );
         }
 
-        // 3. No Data -> Show Empty View
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return _buildEmptyView();
-        }
-
-        // 4. Data Exists -> Show List + Bottom Bar
-        final expenses = snapshot.data!.docs;
-
-        // Calculate total balance
-        double totalBalance = 0;
-        for (var expense in expenses) {
-          final data = expense.data() as Map<String, dynamic>;
-          final amount = data['amount'] as num? ?? 0;
-          totalBalance += amount.toDouble();
-        }
-
-        // Create list of expenses
-        List<Map<String, dynamic>> expensesList = [];
-        for (var expense in expenses) {
-          final data = expense.data() as Map<String, dynamic>;
-          expensesList.add({
-            'id': expense.id,
-            'description': data['description'] ?? 'No description',
-            'amount': data['amount'] ?? 0,
-            'payerId': data['payerId'] ?? 'Unknown',
-            'timestamp': data['timestamp'],
-          });
-        }
-
-        // Sort expenses based on selected sort type
-        _sortExpenses(expensesList);
+        final totalBalance = expensesList.fold(
+          0.0,
+          (sum, expense) => sum + (expense['amount'] as num),
+        );
 
         return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Expenses list
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(
@@ -163,14 +137,20 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                 itemBuilder: (context, index) {
                   final expense = expensesList[index];
                   final description = expense['description'] as String;
-                  final amount = expense['amount'].toString();
+                  final amount = double.parse(expense['amount'].toString());
+                  final payerId = expense['payer'] as String;
                   final currency = groupsProvider.currentCurrency ?? 'SEK';
 
-                  return _buildExpenseItem(description, '$amount $currency');
+                  return _buildExpenseItem(
+                    context,
+                    description,
+                    '$amount $currency',
+                    amount,
+                    payerId,
+                  );
                 },
               ),
             ),
-            // Bottom bar with sort and add button
             _buildBottomBar(context, totalBalance, groupsProvider),
           ],
         );
@@ -178,24 +158,6 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     );
   }
 
-  /// Sort expenses based on the selected sort type
-  void _sortExpenses(List<Map<String, dynamic>> expenses) {
-    if (_sortType == 'Description') {
-      expenses.sort((a, b) {
-        final descA = a['description'] as String;
-        final descB = b['description'] as String;
-        return descA.compareTo(descB);
-      });
-    } else if (_sortType == 'People') {
-      expenses.sort((a, b) {
-        final payerA = a['payer'] as String;
-        final payerB = b['payer'] as String;
-        return payerA.compareTo(payerB);
-      });
-    }
-  }
-
-  /// extracted Bottom Bar widget for cleaner code
   Widget _buildBottomBar(
     BuildContext context,
     double totalBalance,
@@ -261,176 +223,83 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     );
   }
 
-  Widget _buildExpenseItem(String title, String amount) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(left: BorderSide(color: Colors.grey[400]!, width: 8)),
-        borderRadius: const BorderRadius.only(
-          topRight: Radius.circular(4),
-          bottomRight: Radius.circular(4),
+  Widget _buildExpenseItem(
+    BuildContext context,
+    String title,
+    String amount,
+    double rawAmount,
+    String payerId,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => ExpenseDetailScreen(
+              description: title,
+              amount: rawAmount,
+              payerId: payerId,
+            ),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(left: BorderSide(color: Colors.grey[400]!, width: 8)),
+          borderRadius: const BorderRadius.only(
+            topRight: Radius.circular(4),
+            bottomRight: Radius.circular(4),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              offset: const Offset(0, 2),
+              blurRadius: 4,
+            ),
+          ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            offset: const Offset(0, 2),
-            blurRadius: 4,
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        children: [
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: AppTheme.lightGray,
-              borderRadius: BorderRadius.circular(4),
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: AppTheme.lightGray,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Icon(Icons.receipt, color: AppTheme.middleGray),
             ),
-            child: const Icon(Icons.receipt, color: AppTheme.middleGray),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: AppTheme.darkGray,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  amount,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.darkGray,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Consumer<GroupsProvider>(
-        builder: (context, groupsProvider, child) {
-          final inviteCode = groupsProvider.currentInviteCode ?? '------';
-
-          return Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppTheme.white),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-              const Spacer(),
-              GestureDetector(
-                onTap: () {
-                  if (inviteCode != '------') {
-                    Clipboard.setData(ClipboardData(text: inviteCode));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Invite code copied to clipboard'),
-                        duration: Duration(milliseconds: 1500),
-                      ),
-                    );
-                  }
-                },
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'Share Invite Code',
-                      style: TextStyle(
-                        color: AppTheme.middleGray,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          inviteCode,
-                          style: const TextStyle(
-                            color: AppTheme.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        const Icon(
-                          Icons.content_copy,
-                          color: AppTheme.white,
-                          size: 14,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildGroupInfo(BuildContext context) {
-    return Consumer<GroupsProvider>(
-      builder: (context, groupsProvider, child) {
-        return Container(
-          color: Colors.grey[300],
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          child: Row(
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(color: AppTheme.lightGray),
-              ),
-              const SizedBox(width: 12),
-              Column(
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    groupsProvider.currentGroupName ?? 'Group Name',
+                    title,
                     style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
                       color: AppTheme.darkGray,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   Text(
-                    '${groupsProvider.currentGroupTotalBalance.toStringAsFixed(2)} ${groupsProvider.currentCurrency ?? 'SEK'}',
+                    amount,
                     style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                       color: AppTheme.darkGray,
                     ),
                   ),
                 ],
               ),
-            ],
-          ),
-        );
-      },
+            ),
+          ],
+        ),
+      ),
     );
   }
 

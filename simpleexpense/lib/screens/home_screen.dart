@@ -396,7 +396,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ),
                                     const SizedBox(height: 6),
                                     Text(
-                                      '${balance.toStringAsFixed(2)} $currency | $memberCount members',
+                                      '${balance.toStringAsFixed(2)} $currency ',
+                                      // | $memberCount members',
                                       style: const TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w400,
