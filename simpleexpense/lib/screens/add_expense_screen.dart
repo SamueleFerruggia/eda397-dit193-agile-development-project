@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:simpleexpense/providers/groups_provider.dart';
 import 'package:simpleexpense/theme/app_theme.dart';
+import 'expense_split_screen.dart';
 
 class AddExpenseScreen extends StatefulWidget {
   const AddExpenseScreen({super.key});
@@ -22,6 +23,37 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     super.dispose();
   }
 
+  void _handleNext() {
+    final description = _descriptionController.text.trim();
+    final amountText = _amountController.text.trim();
+
+    if (description.isEmpty || amountText.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter description and amount')),
+      );
+      return;
+    }
+
+    final amount = double.tryParse(amountText);
+    if (amount == null || amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid amount')),
+      );
+      return;
+    }
+
+    // Navigate to the ExpenseSplitScreen, passing the entered data
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ExpenseSplitScreen(
+          description: description,
+          amount: amount,
+          payerId: _paidBy, // We will resolve 'Me' to actual UID in the split screen
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final currency = context.watch<GroupsProvider>().currentCurrency ?? 'SEK';
@@ -29,6 +61,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     return Scaffold(
       backgroundColor: AppTheme.lightGray,
       appBar: AppBar(
+        title: const Text('Add expense', style: TextStyle(color: AppTheme.darkGray)),
         backgroundColor: AppTheme.lightGray,
         elevation: 0,
         leading: IconButton(
@@ -46,7 +79,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
+                   const Text(
                     'Add expense',
                     textAlign: TextAlign.center,
                     style: TextStyle(
@@ -60,98 +93,45 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     controller: _descriptionController,
                     decoration: InputDecoration(
                       hintText: 'What is this for?',
-                      hintStyle: const TextStyle(color: AppTheme.middleGray),
                       filled: true,
                       fillColor: AppTheme.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppTheme.lightGray),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                   ),
                   const SizedBox(height: 16),
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Expanded(
                         child: TextField(
                           controller: _amountController,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           decoration: InputDecoration(
                             hintText: '0.00',
-                            hintStyle: const TextStyle(
-                              color: AppTheme.middleGray,
-                            ),
                             filled: true,
                             fillColor: AppTheme.white,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(
-                                color: AppTheme.lightGray,
-                              ),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(
-                                color: Colors.grey.shade300,
-                              ),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
-                            ),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                           ),
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Text(
-                        currency,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: AppTheme.darkGray,
-                        ),
-                      ),
+                      Text(currency, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     ],
                   ),
                   const SizedBox(height: 24),
-                  const Text(
-                    'Paid by',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: AppTheme.darkGray,
-                    ),
-                  ),
+                  const Text('Paid by', style: TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
-                      color: AppTheme.lightGray,
-                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: DropdownButton<String>(
                       value: _paidBy,
                       isExpanded: true,
                       underline: const SizedBox.shrink(),
-                      icon: const Icon(Icons.keyboard_arrow_down),
-                      items: const [
-                        DropdownMenuItem(value: 'Me', child: Text('Me')),
-                      ],
-                      onChanged: (value) {
-                        if (value != null) setState(() => _paidBy = value);
-                      },
+                      items: const [DropdownMenuItem(value: 'Me', child: Text('Me'))],
+                      onChanged: (val) => setState(() => _paidBy = val!),
                     ),
                   ),
                 ],
@@ -159,27 +139,17 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             ),
           ),
           Container(
-            width: double.infinity,
             padding: const EdgeInsets.all(24),
             color: AppTheme.white,
             child: SizedBox(
               height: 52,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: _handleNext, // Call Next
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.darkGray,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                child: const Text(
-                  'Next',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.white,
-                  ),
-                ),
+                child: const Text('Next', style: TextStyle(fontSize: 16, color: Colors.white)),
               ),
             ),
           ),

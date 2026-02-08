@@ -1,9 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:simpleexpense/theme/app_theme.dart';
-import '../providers/groups_provider.dart';
 import 'package:flutter/services.dart';
-import 'add_expense_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:simpleexpense/providers/groups_provider.dart';
+import 'package:simpleexpense/screens/add_expense_screen.dart';
+import 'package:simpleexpense/theme/app_theme.dart';
 
 class GroupDetailScreen extends StatefulWidget {
   final String groupId;
@@ -18,6 +19,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   @override
   void initState() {
     super.initState();
+    // Select the current group in the provider when the screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<GroupsProvider>().selectGroup(widget.groupId);
     });
@@ -32,18 +34,15 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
           children: [
             _buildHeader(context),
             _buildGroupInfo(context),
+            // Main content area
             Expanded(
               child: Consumer<GroupsProvider>(
                 builder: (context, groupsProvider, child) {
-                  // For now,  mock data -  need to show actual expenses
-                  final hasExpenses = false;
-
                   return Container(
                     width: double.infinity,
                     decoration: const BoxDecoration(color: AppTheme.white),
-                    child: hasExpenses
-                        ? _buildExpensesView(context, groupsProvider)
-                        : _buildEmptyView(),
+                    // We delegate the logic (Empty vs List) to the _buildExpensesView
+                    child: _buildExpensesView(context, groupsProvider),
                   );
                 },
               ),
@@ -54,9 +53,10 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     );
   }
 
+  /// Displays the empty state with a big Add button
   Widget _buildEmptyView() {
     return GestureDetector(
-      onTap: () {},
+      onTap: () => _navigateToAddExpense(context),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -85,86 +85,124 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     );
   }
 
+  /// Logic to fetch real data from Firestore
   Widget _buildExpensesView(
     BuildContext context,
     GroupsProvider groupsProvider,
   ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // Expenses list
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            children: [
-              _buildExpenseItem('XXXXXXXX', '100 kr'),
-              _buildExpenseItem('XXXXXXX', '100 kr'),
-            ],
-          ),
-        ),
-        // Bottom bar with sort and add button
-        Container(
-          color: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppTheme.lightGray,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: DropdownButton<String>(
+    final groupId = groupsProvider.currentGroupId;
+
+    // Safety check
+    if (groupId == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('groups')
+          .doc(groupId)
+          .collection('expenses')
+          .orderBy('timestamp', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        // 1. Loading
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        // 2. Error
+        if (snapshot.hasError) {
+          return Center(child: Text("Error: ${snapshot.error}"));
+        }
+
+        // 3. No Data -> Show Empty View
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return _buildEmptyView();
+        }
+
+        // 4. Data Exists -> Show List + Bottom Bar
+        final expenses = snapshot.data!.docs;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Expenses list
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                itemCount: expenses.length,
+                itemBuilder: (context, index) {
+                  final data = expenses[index].data() as Map<String, dynamic>;
+                  final description = data['description'] ?? 'No description';
+                  final amount = data['amount']?.toString() ?? '0';
+
+                  return _buildExpenseItem(
+                    description,
+                    '$amount ${groupsProvider.currentCurrency}',
+                  );
+                },
+              ),
+            ),
+            // Bottom bar with sort and add button
+            _buildBottomBar(context),
+          ],
+        );
+      },
+    );
+  }
+
+  /// extracted Bottom Bar widget for cleaner code
+  Widget _buildBottomBar(BuildContext context) {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
+              decoration: BoxDecoration(
+                color: AppTheme.lightGray,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: DropdownButton<String>(
+                value: 'Description / People',
+                isExpanded: true,
+                underline: const SizedBox.shrink(),
+                items: [
+                  DropdownMenuItem(
                     value: 'Description / People',
-                    isExpanded: true,
-                    underline: const SizedBox.shrink(),
-                    items: [
-                      DropdownMenuItem(
-                        value: 'Description / People',
-                        child: Text(
-                          'Description / People',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppTheme.darkGray,
-                          ),
-                        ),
+                    child: Text(
+                      'Description / People',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.darkGray,
                       ),
-                    ],
-                    onChanged: null,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: AppTheme.darkGray,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Column(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.add, color: Colors.white),
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const AddExpenseScreen(),
-                          ),
-                        );
-                      },
                     ),
-                  ],
-                ),
+                  ),
+                ],
+                onChanged: null, // Placeholder for sorting logic
               ),
-            ],
+            ),
           ),
-        ),
-      ],
+          const SizedBox(width: 12),
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: AppTheme.darkGray,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.add, color: Colors.white),
+              onPressed: () => _navigateToAddExpense(context),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -178,6 +216,13 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
           topRight: Radius.circular(4),
           bottomRight: Radius.circular(4),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            offset: const Offset(0, 2),
+            blurRadius: 4,
+          )
+        ],
       ),
       padding: const EdgeInsets.all(12),
       child: Row(
@@ -189,6 +234,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
               color: AppTheme.lightGray,
               borderRadius: BorderRadius.circular(4),
             ),
+            child: const Icon(Icons.receipt, color: AppTheme.middleGray),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -302,6 +348,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(color: AppTheme.lightGray),
+                // Placeholder for Group Image
               ),
               const SizedBox(width: 12),
               Column(
@@ -330,6 +377,14 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
           ),
         );
       },
+    );
+  }
+
+  void _navigateToAddExpense(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const AddExpenseScreen(),
+      ),
     );
   }
 }

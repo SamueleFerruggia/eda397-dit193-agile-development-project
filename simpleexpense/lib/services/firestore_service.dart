@@ -69,4 +69,26 @@ class FirestoreService {
       Iterable.generate(6, (_) => chars.codeUnitAt(rnd.nextInt(chars.length))),
     );
   }
+
+  // --- EXPENSES ---
+
+  // Adds a new expense to the specified group
+  Future<void> addExpense({
+    required String groupId,
+    required String description,
+    required double amount,
+    required String payerId,
+  }) async {
+    // Add the document to the 'expenses' sub-collection of the group
+    await _db
+        .collection('groups')
+        .doc(groupId)
+        .collection('expenses')
+        .add({
+      'description': description,
+      'amount': amount,
+      'payerId': payerId,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+  }
 }
