@@ -6,11 +6,13 @@ import '../services/firestore_service.dart';
 class CreateGroupStep3 extends StatefulWidget {
   final String groupName;
   final List<String> invitedMembers;
+  final String inviteCode;
 
   const CreateGroupStep3({
     super.key,
     required this.groupName,
     required this.invitedMembers,
+    required this.inviteCode,
   });
 
   @override
@@ -39,6 +41,7 @@ class _CreateGroupStep3State extends State<CreateGroupStep3> {
         creatorId: user.uid,
         invitedEmails: widget.invitedMembers,
         currency: _currency,
+        inviteCode: widget.inviteCode,
       );
 
       if (!mounted) return;
@@ -56,11 +59,17 @@ class _CreateGroupStep3State extends State<CreateGroupStep3> {
     } catch (e) {
       if (!mounted) return;
       // Error management
+      String errorMessage = 'Error creating group';
+
+      // Handle network errors specifically
+      if (e.toString().contains('Network') ||
+          e.toString().contains('connection') ||
+          e.toString().contains('Connection refused')) {
+        errorMessage = 'Creation failed, please try again later';
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error creating group: $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
       );
     } finally {
       if (mounted) {

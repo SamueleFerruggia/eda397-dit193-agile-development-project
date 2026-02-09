@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../providers/auth_provider.dart';
+import 'home_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -48,8 +49,10 @@ class _SignupScreenState extends State<SignupScreen> {
       if (!mounted) return;
 
       if (error == null) {
-        // Success
-        Navigator.of(context).pop(); // Back to login or HomeScreen
+        // Success - navigate directly to Home Screen
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Account created successfully!')),
         );

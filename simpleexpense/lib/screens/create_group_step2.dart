@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:simpleexpense/theme/app_theme.dart';
 import 'create_group_step3.dart';
+import 'dart:math';
 
 class CreateGroupStep2 extends StatefulWidget {
   final String groupName;
@@ -16,6 +18,21 @@ class _CreateGroupStep2State extends State<CreateGroupStep2> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final List<String> _members = [];
+  late String _inviteCode;
+
+  @override
+  void initState() {
+    super.initState();
+    _inviteCode = _generateInviteCode();
+  }
+
+  String _generateInviteCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    Random rnd = Random();
+    return String.fromCharCodes(
+      Iterable.generate(6, (_) => chars.codeUnitAt(rnd.nextInt(chars.length))),
+    );
+  }
 
   void _addMember() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
@@ -127,18 +144,44 @@ class _CreateGroupStep2State extends State<CreateGroupStep2> {
                         border: Border.all(color: AppTheme.middleGray),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: Column(
-                        children: const [
-                          Text(
-                            'Share Invite Code',
-                            style: TextStyle(fontSize: 12),
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'XXXXXX',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ],
+                      child: GestureDetector(
+                        onTap: () {
+                          Share.share(
+                            'Join my group "${widget.groupName}" in Simple Expense!\n\nInvite Code: $_inviteCode',
+                            subject: 'Join "${widget.groupName}" group',
+                          );
+                        },
+                        child: Column(
+                          children: [
+                            const Text(
+                              'Share Invite Code',
+                              style: TextStyle(
+                                color: AppTheme.darkGray,
+                                fontSize: 14,
+                              ),
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  _inviteCode,
+                                  style: const TextStyle(
+                                    color: AppTheme.darkGray,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                const Icon(
+                                  Icons.share,
+                                  color: AppTheme.darkGray,
+                                  size: 14,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -161,6 +204,7 @@ class _CreateGroupStep2State extends State<CreateGroupStep2> {
                         builder: (_) => CreateGroupStep3(
                           groupName: widget.groupName,
                           invitedMembers: _members,
+                          inviteCode: _inviteCode,
                         ),
                       ),
                     );

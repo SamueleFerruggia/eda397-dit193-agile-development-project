@@ -7,16 +7,16 @@ import 'package:simpleexpense/screens/expense_detail_screen.dart';
 import 'package:simpleexpense/theme/app_theme.dart';
 import 'package:simpleexpense/screens/widgets/expense_widgets.dart';
 
-class GroupDetailScreen extends StatefulWidget {
+class GroupDashboardScreen extends StatefulWidget {
   final String groupId;
 
-  const GroupDetailScreen({super.key, required this.groupId});
+  const GroupDashboardScreen({super.key, required this.groupId});
 
   @override
-  State<GroupDetailScreen> createState() => _GroupDetailScreenState();
+  State<GroupDashboardScreen> createState() => _GroupDashboardScreenState();
 }
 
-class _GroupDetailScreenState extends State<GroupDetailScreen> {
+class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
   String _sortType = 'Description';
 
   @override

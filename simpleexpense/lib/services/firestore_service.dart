@@ -19,15 +19,13 @@ class FirestoreService {
   // --- GROUPS ---
 
   // Create a new group
-  Future<void> createGroup({
+  Future<String> createGroup({
     required String groupName,
     required String creatorId,
     required List<String> invitedEmails, // List of invited emails
     required String currency,
+    required String inviteCode, // Pre-generated invite code
   }) async {
-    // Generate a unique invite code for the group (6 characters alphanumeric)
-    String inviteCode = _generateInviteCode();
-
     // Create a new document in the 'groups' collection with an auto-generated ID
     DocumentReference groupRef = _db.collection('groups').doc();
 
@@ -42,6 +40,8 @@ class FirestoreService {
           invitedEmails, // Save the list of invited emails for later processing
       'createdAt': FieldValue.serverTimestamp(),
     });
+
+    return groupRef.id; // Return the created group ID
   }
 
   /// Stream of groups where the user is a member. Returns empty list when uid is null/empty.

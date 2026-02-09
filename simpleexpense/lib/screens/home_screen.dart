@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:simpleexpense/providers/auth_provider.dart';
 import 'package:simpleexpense/providers/groups_provider.dart';
-import 'package:simpleexpense/screens/group_detail_screen.dart';
+import 'package:simpleexpense/screens/group_dashboard.dart';
 import 'package:simpleexpense/screens/login_screen.dart';
 import 'package:simpleexpense/theme/app_theme.dart';
 import 'create_group_step1.dart';
@@ -152,41 +152,41 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: AppTheme.darkGray,
                     ),
                   ),
-                  const SizedBox(height: 32),
-                  const Text(
-                    'or',
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 32),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => JoinGroupScreen()),
-                      );
-                    },
-                    child: Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[600],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.person_add,
-                        color: Colors.white,
-                        size: 40,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Join a group',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: AppTheme.darkGray,
-                    ),
-                  ),
+                  // const SizedBox(height: 32),
+                  // const Text(
+                  //   'or',
+                  //   style: TextStyle(fontSize: 14, color: Colors.grey),
+                  // ),
+                  // const SizedBox(height: 32),
+                  // GestureDetector(
+                  //   onTap: () {
+                  //     Navigator.of(context).push(
+                  //       MaterialPageRoute(builder: (_) => JoinGroupScreen()),
+                  //     );
+                  //   },
+                  //   child: Container(
+                  //     width: 80,
+                  //     height: 80,
+                  //     decoration: BoxDecoration(
+                  //       color: Colors.grey[600],
+                  //       borderRadius: BorderRadius.circular(8),
+                  //     ),
+                  //     child: const Icon(
+                  //       Icons.person_add,
+                  //       color: Colors.white,
+                  //       size: 40,
+                  //     ),
+                  //   ),
+                  // ),
+                  // const SizedBox(height: 24),
+                  // const Text(
+                  //   'Join a group',
+                  //   style: TextStyle(
+                  //     fontSize: 16,
+                  //     fontWeight: FontWeight.w500,
+                  //     color: AppTheme.darkGray,
+                  //   ),
+                  // ),
                 ],
               ),
             ),
@@ -292,24 +292,24 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
               ),
-              const SizedBox(width: 8),
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: Colors.grey[600],
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.person_add, color: Colors.white),
-                  tooltip: 'Join Group',
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => JoinGroupScreen()),
-                    );
-                  },
-                ),
-              ),
+              // const SizedBox(width: 8),
+              // Container(
+              //   width: 48,
+              //   height: 48,
+              //   decoration: BoxDecoration(
+              //     color: Colors.grey[600],
+              //     borderRadius: BorderRadius.circular(4),
+              //   ),
+              //   child: IconButton(
+              //     icon: const Icon(Icons.person_add, color: Colors.white),
+              //     tooltip: 'Join Group',
+              //     onPressed: () {
+              //       Navigator.of(context).push(
+              //         MaterialPageRoute(builder: (_) => JoinGroupScreen()),
+              //       );
+              //     },
+              //   ),
+              // ),
             ],
           ),
         ),
@@ -342,7 +342,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => GroupDetailScreen(groupId: groupId),
+                          builder: (_) =>
+                              GroupDashboardScreen(groupId: groupId),
                         ),
                       );
                     },

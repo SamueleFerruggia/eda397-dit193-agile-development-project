@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:simpleexpense/providers/groups_provider.dart';
 import 'package:simpleexpense/theme/app_theme.dart';
@@ -25,12 +25,9 @@ class ExpenseHeaderWidget extends StatelessWidget {
               GestureDetector(
                 onTap: () {
                   if (inviteCode != '------') {
-                    Clipboard.setData(ClipboardData(text: inviteCode));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Invite code copied to clipboard'),
-                        duration: Duration(milliseconds: 1500),
-                      ),
+                    Share.share(
+                      'Join my group in Simple Expense!\n\nInvite Code: $inviteCode',
+                      subject: 'Join my Simple Expense group',
                     );
                   }
                 },
@@ -61,7 +58,7 @@ class ExpenseHeaderWidget extends StatelessWidget {
                         ),
                         const SizedBox(width: 6),
                         const Icon(
-                          Icons.content_copy,
+                          Icons.share,
                           color: AppTheme.white,
                           size: 14,
                         ),
