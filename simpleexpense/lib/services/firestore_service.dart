@@ -1,13 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:math';
+import '../models/models.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   // --- USERS ---
 
-  // Save user data to Firestore after registration (based on the class diagram)
+  /// Save user data to Firestore after registration.
   Future<void> saveUser(String uid, String email, String name) async {
+    // We can use the AppUser model here too if we want, but saving directly is fine for now
     await _db.collection('users').doc(uid).set({
       'userId': uid,
       'email': email,
@@ -18,34 +20,34 @@ class FirestoreService {
 
   // --- GROUPS ---
 
-  // Create a new group
+  /// Create a new group.
   Future<String> createGroup({
     required String groupName,
     required String creatorId,
-    required List<String> invitedEmails, // List of invited emails
+    required List<String> invitedEmails,
     required String currency,
-    required String inviteCode, // Pre-generated invite code
+    required String inviteCode,
   }) async {
-    // Create a new document in the 'groups' collection with an auto-generated ID
     DocumentReference groupRef = _db.collection('groups').doc();
 
+    // Create the Group object (we use the model structure logic here)
     await groupRef.set({
       'groupId': groupRef.id,
       'groupName': groupName,
       'adminId': creatorId,
       'inviteCode': inviteCode,
       'currency': currency,
-      'members': [creatorId], // admin is the first member of the group
-      'invitedEmails':
-          invitedEmails, // Save the list of invited emails for later processing
+      'members': [creatorId], // Creator is the first member
+      'invitedEmails': invitedEmails,
       'createdAt': FieldValue.serverTimestamp(),
     });
 
-    return groupRef.id; // Return the created group ID
+    return groupRef.id;
   }
 
-  /// Stream of groups where the user is a member. Returns empty list when uid is null/empty.
-  Stream<List<Map<String, dynamic>>> streamUserGroups(String? uid) {
+  /// Stream of groups where the user is a member.
+  /// UPDATED: Now returns a List<Group> model instead of raw Maps.
+  Stream<List<Group>> streamUserGroups(String? uid) {
     if (uid == null || uid.isEmpty) {
       return Stream.value([]);
     }
@@ -54,20 +56,61 @@ class FirestoreService {
         .where('members', arrayContains: uid)
         .snapshots()
         .map(
-          (snapshot) => snapshot.docs.map((doc) {
-            final data = doc.data();
-            data['groupId'] = doc.id;
-            return data;
-          }).toList(),
+          (snapshot) => snapshot.docs
+              .map((doc) => Group.fromFirestore(doc))
+              .toList(),
         );
   }
 
-  /// Join a group using the invite code. Throws an exception if the code is invalid or user is already a member.
+  /// Fetches the details of all members in a group (Names, Emails, Roles).
+  /// This is needed to display "Mario" instead of "user_123".
+  Future<List<GroupMember>> getGroupMembers(String groupId) async {
+    try {
+      // 1. Fetch the group document to get the member list and admin ID
+      final groupDoc = await _db.collection('groups').doc(groupId).get();
+      if (!groupDoc.exists) return [];
+
+      final group = Group.fromFirestore(groupDoc);
+      final memberIds = group.memberIds;
+
+      if (memberIds.isEmpty) return [];
+
+      List<GroupMember> members = [];
+
+      // 2. Fetch user documents.
+      // Firestore 'whereIn' is limited to 10 values per query.
+      // We process the IDs in chunks of 10 to avoid errors with large groups.
+      for (var i = 0; i < memberIds.length; i += 10) {
+        final end = (i + 10 < memberIds.length) ? i + 10 : memberIds.length;
+        final chunk = memberIds.sublist(i, end);
+
+        final usersSnapshot = await _db
+            .collection('users')
+            .where(FieldPath.documentId, whereIn: chunk)
+            .get();
+
+        for (var doc in usersSnapshot.docs) {
+          final user = AppUser.fromFirestore(doc);
+          
+          // Determine the role (Admin vs Member)
+          final role = (user.uid == group.adminId) ? 'admin' : 'member';
+          
+          members.add(GroupMember.fromUser(user, role: role));
+        }
+      }
+
+      return members;
+    } catch (e) {
+      print('Error fetching group members: $e');
+      return [];
+    }
+  }
+
+  /// Join a group using the invite code.
   Future<void> joinGroupByCode({
     required String uid,
     required String inviteCode,
   }) async {
-    // Find the group with the matching invite code
     final querySnapshot = await _db
         .collection('groups')
         .where('inviteCode', isEqualTo: inviteCode.toUpperCase())
@@ -82,12 +125,10 @@ class FirestoreService {
     final groupId = groupDoc.id;
     final members = List<String>.from(groupDoc['members'] as List? ?? []);
 
-    // Check if user is already a member
     if (members.contains(uid)) {
       throw Exception('You are already a member of this group.');
     }
 
-    // Add user to the group's members list
     await _db.collection('groups').doc(groupId).update({
       'members': FieldValue.arrayUnion([uid]),
     });
@@ -103,13 +144,14 @@ class FirestoreService {
 
   // --- EXPENSES ---
 
-  // Adds a new expense to the specified group
+  /// Adds a new expense to the specified group.
   Future<void> addExpense({
     required String groupId,
     required String description,
     required double amount,
     required String payerId,
   }) async {
+    // We could use Expense(...).toJson() here, but passing primitives is fine too
     await _db.collection('groups').doc(groupId).collection('expenses').add({
       'description': description,
       'amount': amount,
@@ -118,7 +160,7 @@ class FirestoreService {
     });
   }
 
-  /// Updates an existing expense (description, amount, payerId).
+  /// Updates an existing expense.
   Future<void> updateExpense({
     required String groupId,
     required String expenseId,
@@ -139,26 +181,6 @@ class FirestoreService {
         });
   }
 
-  /// Get total balance for a group (sum of all expenses)
-  Future<double> getGroupTotalBalance(String groupId) async {
-    try {
-      final snapshot = await _db
-          .collection('groups')
-          .doc(groupId)
-          .collection('expenses')
-          .get();
-
-      double total = 0;
-      for (var doc in snapshot.docs) {
-        final amount = doc['amount'] as num? ?? 0;
-        total += amount.toDouble();
-      }
-      return total;
-    } catch (e) {
-      return 0;
-    }
-  }
-
   /// Stream of total balance for a group
   Stream<double> streamGroupTotalBalance(String groupId) {
     return _db
@@ -176,18 +198,7 @@ class FirestoreService {
         });
   }
 
-  /// Get total members count for a group
-  Future<int> getGroupMembersCount(String groupId) async {
-    try {
-      final doc = await _db.collection('groups').doc(groupId).get();
-      final members = doc['members'] as List? ?? [];
-      return members.length;
-    } catch (e) {
-      return 0;
-    }
-  }
-
-  /// Stream of members for a group
+  /// Stream of members count for a group
   Stream<int> streamGroupMembersCount(String groupId) {
     return _db.collection('groups').doc(groupId).snapshots().map((doc) {
       final members = doc['members'] as List? ?? [];

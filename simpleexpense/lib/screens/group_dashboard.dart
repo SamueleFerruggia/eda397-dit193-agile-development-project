@@ -6,6 +6,7 @@ import 'package:simpleexpense/screens/add_expense_screen.dart';
 import 'package:simpleexpense/screens/expense_detail_screen.dart';
 import 'package:simpleexpense/theme/app_theme.dart';
 import 'package:simpleexpense/screens/widgets/expense_widgets.dart';
+import '../models/models.dart'; // Import models
 
 class GroupDashboardScreen extends StatefulWidget {
   final String groupId;
@@ -85,13 +86,10 @@ class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final expensesList = snapshot.data!.docs.map((doc) {
-          return {
-            'description': doc['description'] ?? '',
-            'amount': doc['amount'] ?? 0.0,
-            'payer': doc['payerId'] ?? '',
-          };
-        }).toList();
+        // Convert Firestore documents to Expense objects
+        final expensesList = snapshot.data!.docs
+            .map((doc) => Expense.fromFirestore(doc))
+            .toList();
 
         if (expensesList.isEmpty) {
           return Column(
@@ -120,9 +118,10 @@ class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
           );
         }
 
+        // Calculate total balance using the Expense model
         final totalBalance = expensesList.fold(
           0.0,
-          (sum, expense) => sum + (expense['amount'] as num),
+          (sum, expense) => sum + expense.amount,
         );
 
         return Column(
@@ -136,17 +135,14 @@ class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
                 itemCount: expensesList.length,
                 itemBuilder: (context, index) {
                   final expense = expensesList[index];
-                  final description = expense['description'] as String;
-                  final amount = double.parse(expense['amount'].toString());
-                  final payerId = expense['payer'] as String;
                   final currency = groupsProvider.currentCurrency ?? 'SEK';
 
                   return _buildExpenseItem(
                     context,
-                    description,
-                    '$amount $currency',
-                    amount,
-                    payerId,
+                    expense.description,
+                    '${expense.amount.toStringAsFixed(2)} $currency',
+                    expense.amount,
+                    expense.payerId,
                   );
                 },
               ),
@@ -226,7 +222,7 @@ class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
   Widget _buildExpenseItem(
     BuildContext context,
     String title,
-    String amount,
+    String amountString,
     double rawAmount,
     String payerId,
   ) {
@@ -287,7 +283,7 @@ class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    amount,
+                    amountString,
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,

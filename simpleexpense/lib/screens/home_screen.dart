@@ -6,7 +6,7 @@ import 'package:simpleexpense/screens/group_dashboard.dart';
 import 'package:simpleexpense/screens/login_screen.dart';
 import 'package:simpleexpense/theme/app_theme.dart';
 import 'create_group_step1.dart';
-import 'join_group_screen.dart';
+import 'join_group_screen.dart'; 
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -109,7 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(width: 12),
                   Text(
                     authProvider.currentUserName ?? 'Account Name',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                       color: AppTheme.darkGray,
@@ -152,41 +152,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: AppTheme.darkGray,
                     ),
                   ),
-                  // const SizedBox(height: 32),
-                  // const Text(
-                  //   'or',
-                  //   style: TextStyle(fontSize: 14, color: Colors.grey),
-                  // ),
-                  // const SizedBox(height: 32),
-                  // GestureDetector(
-                  //   onTap: () {
-                  //     Navigator.of(context).push(
-                  //       MaterialPageRoute(builder: (_) => JoinGroupScreen()),
-                  //     );
-                  //   },
-                  //   child: Container(
-                  //     width: 80,
-                  //     height: 80,
-                  //     decoration: BoxDecoration(
-                  //       color: Colors.grey[600],
-                  //       borderRadius: BorderRadius.circular(8),
-                  //     ),
-                  //     child: const Icon(
-                  //       Icons.person_add,
-                  //       color: Colors.white,
-                  //       size: 40,
-                  //     ),
-                  //   ),
-                  // ),
-                  // const SizedBox(height: 24),
-                  // const Text(
-                  //   'Join a group',
-                  //   style: TextStyle(
-                  //     fontSize: 16,
-                  //     fontWeight: FontWeight.w500,
-                  //     color: AppTheme.darkGray,
-                  //   ),
-                  // ),
                 ],
               ),
             ),
@@ -232,7 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 4),
                       const Text(
-                        '0 SEK | 0 SEK',
+                        '0 SEK | 0 SEK', // We will fix this global total later
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
@@ -292,24 +257,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
               ),
-              // const SizedBox(width: 8),
-              // Container(
-              //   width: 48,
-              //   height: 48,
-              //   decoration: BoxDecoration(
-              //     color: Colors.grey[600],
-              //     borderRadius: BorderRadius.circular(4),
-              //   ),
-              //   child: IconButton(
-              //     icon: const Icon(Icons.person_add, color: Colors.white),
-              //     tooltip: 'Join Group',
-              //     onPressed: () {
-              //       Navigator.of(context).push(
-              //         MaterialPageRoute(builder: (_) => JoinGroupScreen()),
-              //       );
-              //     },
-              //   ),
-              // ),
             ],
           ),
         ),
@@ -327,16 +274,15 @@ class _HomeScreenState extends State<HomeScreen> {
             itemCount: groups.length,
             itemBuilder: (context, index) {
               final group = groups[index];
-              final name = group['groupName'] as String? ?? 'Group';
-              final currency = group['currency'] as String? ?? 'SEK';
-              final groupId = group['groupId'] as String? ?? '';
+              // UPDATED: Using Model properties instead of Map keys
+              final name = group.name;
+              final currency = group.currency;
+              final groupId = group.id;
 
               return Consumer<GroupsProvider>(
                 builder: (context, groupsProvider, _) {
                   final balance = groupsProvider.getGroupBalance(groupId);
-                  final memberCount = groupsProvider.getGroupMemberCount(
-                    groupId,
-                  );
+                  // final memberCount = groupsProvider.getGroupMemberCount(groupId);
 
                   return GestureDetector(
                     onTap: () {
@@ -398,7 +344,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                     const SizedBox(height: 6),
                                     Text(
                                       '${balance.toStringAsFixed(2)} $currency ',
-                                      // | $memberCount members',
                                       style: const TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w400,

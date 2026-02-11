@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../services/firestore_service.dart';
+import '../models/models.dart';
 
 class GroupsProvider extends ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
 
-  List<Map<String, dynamic>> _groups = [];
-  List<Map<String, dynamic>> get groups => List.unmodifiable(_groups);
+  // Changed from List<Map> to List<Group>
+  List<Group> _groups = [];
+  List<Group> get groups => List.unmodifiable(_groups);
 
   bool get hasGroups => _groups.isNotEmpty;
 
@@ -14,43 +16,30 @@ class GroupsProvider extends ChangeNotifier {
   final Map<String, double> _groupBalances = {};
   final Map<String, int> _groupMembers = {};
 
-  StreamSubscription<List<Map<String, dynamic>>>? _subscription;
+  StreamSubscription<List<Group>>? _subscription;
   String? _currentUid;
   String? get currentUid => _currentUid;
 
   String? _selectedGroupId;
 
   /// Get the currently selected group, or the first group if none selected
-  Map<String, dynamic>? get selectedGroup {
+  Group? get selectedGroup {
     if (_groups.isEmpty) return null;
     if (_selectedGroupId != null) {
       try {
-        return _groups.firstWhere(
-          (g) => (g['groupId'] as String?) == _selectedGroupId,
-        );
+        return _groups.firstWhere((g) => g.id == _selectedGroupId);
       } catch (e) {
-        // If selected group not found, return first group
         return _groups.first;
       }
     }
     return _groups.first;
   }
 
-  String? get currentInviteCode {
-    return selectedGroup?['inviteCode'] as String?;
-  }
-
-  String? get currentGroupId {
-    return selectedGroup?['groupId'] as String?;
-  }
-
-  String? get currentGroupName {
-    return selectedGroup?['groupName'] as String?;
-  }
-
-  String? get currentCurrency {
-    return selectedGroup?['currency'] as String?;
-  }
+  // Getters now use Model properties instead of Map keys ['key']
+  String? get currentInviteCode => selectedGroup?.inviteCode;
+  String? get currentGroupId => selectedGroup?.id;
+  String? get currentGroupName => selectedGroup?.name;
+  String? get currentCurrency => selectedGroup?.currency;
 
   /// Get total balance for the currently selected group
   double get currentGroupTotalBalance {
@@ -80,8 +69,7 @@ class GroupsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Start listening to groups for the given user. Call with null to stop and clear.
-  /// No-op if already listening to the same uid.
+  /// Start listening to groups for the given user.
   void startListening(String? uid) {
     if (uid == _currentUid) return;
     _currentUid = uid;
@@ -97,23 +85,25 @@ class GroupsProvider extends ChangeNotifier {
       return;
     }
 
+    // Now listening to Stream<List<Group>>
     _subscription = _firestoreService.streamUserGroups(uid).listen((list) {
       _groups = list;
 
       // Subscribe to balance and members streams for each group
       for (var group in _groups) {
-        final groupId = group['groupId'] as String?;
-        if (groupId != null) {
-          _firestoreService.streamGroupTotalBalance(groupId).listen((balance) {
-            _groupBalances[groupId] = balance;
-            notifyListeners();
-          });
+        final groupId = group.id;
+        
+        // Listen to balance updates
+        _firestoreService.streamGroupTotalBalance(groupId).listen((balance) {
+          _groupBalances[groupId] = balance;
+          notifyListeners();
+        });
 
-          _firestoreService.streamGroupMembersCount(groupId).listen((count) {
-            _groupMembers[groupId] = count;
-            notifyListeners();
-          });
-        }
+        // Listen to member count updates
+        _firestoreService.streamGroupMembersCount(groupId).listen((count) {
+          _groupMembers[groupId] = count;
+          notifyListeners();
+        });
       }
 
       notifyListeners();
@@ -126,9 +116,7 @@ class GroupsProvider extends ChangeNotifier {
     required String inviteCode,
   }) async {
     await _firestoreService.joinGroupByCode(uid: uid, inviteCode: inviteCode);
-
-    // Refresh the groups list after joining
-    startListening(uid);
+    // The stream will automatically update the list
   }
 
   void stopListening() {
