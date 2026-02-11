@@ -9,12 +9,14 @@ class ExpenseDetailScreen extends StatefulWidget {
   final String description;
   final double amount;
   final String payerId;
+  final List<String> splitWith; // List of members involved in the split
 
   const ExpenseDetailScreen({
     super.key,
     required this.description,
     required this.amount,
     required this.payerId,
+    required this.splitWith,
   });
 
   @override
@@ -27,23 +29,16 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final members =
-          context.read<GroupsProvider>().selectedGroup?['members']
-              as List<dynamic>?;
-      if (members != null) {
-        setState(() {
-          _selectedMemberIds = members.map((e) => e.toString()).toSet();
-        });
-      }
-    });
+    // Initialize selection based on the saved split data
+    _selectedMemberIds = widget.splitWith.toSet();
   }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<GroupsProvider>(
       builder: (context, groupsProvider, _) {
-        final members = groupsProvider.selectedGroup?['members'] ?? [];
+        // Get all group members to display the full list
+        final members = groupsProvider.selectedGroup?.memberIds ?? [];
         final currency = groupsProvider.currentCurrency ?? 'SEK';
         final currentUser = FirebaseAuth.instance.currentUser;
 
@@ -123,7 +118,9 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 32),
                             child: Text(
-                              'Total amount: ${widget.amount.toStringAsFixed(0)} $currency\nPaid by: ${widget.payerId == currentUser?.uid ? 'Me' : 'Someone else'}\nSplit: equally',
+                              'Total amount: ${widget.amount.toStringAsFixed(0)} $currency\n'
+                              'Paid by: ${widget.payerId == currentUser?.uid ? 'Me' : 'Someone else'}\n'
+                              'Split: equally',
                               style: const TextStyle(
                                 fontSize: 14,
                                 color: AppTheme.darkGray,
@@ -146,16 +143,14 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                   physics: const NeverScrollableScrollPhysics(),
                                   itemCount: members.length,
                                   itemBuilder: (context, index) {
-                                    final memberId = members[index].toString();
+                                    final memberId = members[index];
                                     final isMe = memberId == currentUser?.uid;
-                                    final displayName = isMe ? 'Me' : 'X' * 9;
-                                    final isSelected = _selectedMemberIds
-                                        .contains(memberId);
+                                    // Placeholder for name until we implement Member fetching in this screen
+                                    final displayName = isMe ? 'Me' : 'User...${memberId.substring(0, 4)}';
+                                    final isSelected = _selectedMemberIds.contains(memberId);
 
                                     return Padding(
-                                      padding: const EdgeInsets.only(
-                                        bottom: 12,
-                                      ),
+                                      padding: const EdgeInsets.only(bottom: 12),
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(
                                           horizontal: 12,
@@ -163,16 +158,14 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                         ),
                                         decoration: BoxDecoration(
                                           color: Colors.grey.shade300,
-                                          borderRadius: BorderRadius.circular(
-                                            4,
-                                          ),
+                                          borderRadius: BorderRadius.circular(4),
                                         ),
                                         child: Row(
                                           children: [
                                             Checkbox(
                                               value: isSelected,
                                               activeColor: AppTheme.darkGray,
-                                              onChanged: null,
+                                              onChanged: null, // Read-only view
                                             ),
                                             Expanded(
                                               child: Text(
@@ -185,8 +178,8 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                             ),
                                             Text(
                                               isSelected
-                                                  ? '${splitAmount.toStringAsFixed(0)} ${currency.substring(0, 2)}'
-                                                  : '0 ${currency.substring(0, 2)}',
+                                                  ? '${splitAmount.toStringAsFixed(0)} ${currency.substring(0, min(2, currency.length))}' 
+                                                  : '0 $currency',
                                               style: const TextStyle(
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.bold,
@@ -216,9 +209,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                   child: OutlinedButton(
                                     onPressed: () {},
                                     style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(
-                                        color: Colors.grey,
-                                      ),
+                                      side: const BorderSide(color: Colors.grey),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(4),
                                       ),
@@ -270,4 +261,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
       },
     );
   }
+  
+  // Helper for safe substring
+  int min(int a, int b) => a < b ? a : b;
 }
