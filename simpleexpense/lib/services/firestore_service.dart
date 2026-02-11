@@ -7,9 +7,7 @@ class FirestoreService {
 
   // --- USERS ---
 
-  /// Save user data to Firestore after registration.
   Future<void> saveUser(String uid, String email, String name) async {
-    // We can use the AppUser model here too if we want, but saving directly is fine for now
     await _db.collection('users').doc(uid).set({
       'userId': uid,
       'email': email,
@@ -20,7 +18,6 @@ class FirestoreService {
 
   // --- GROUPS ---
 
-  /// Create a new group.
   Future<String> createGroup({
     required String groupName,
     required String creatorId,
@@ -30,14 +27,13 @@ class FirestoreService {
   }) async {
     DocumentReference groupRef = _db.collection('groups').doc();
 
-    // Create the Group object (we use the model structure logic here)
     await groupRef.set({
       'groupId': groupRef.id,
       'groupName': groupName,
       'adminId': creatorId,
       'inviteCode': inviteCode,
       'currency': currency,
-      'members': [creatorId], // Creator is the first member
+      'members': [creatorId],
       'invitedEmails': invitedEmails,
       'createdAt': FieldValue.serverTimestamp(),
     });
@@ -45,8 +41,6 @@ class FirestoreService {
     return groupRef.id;
   }
 
-  /// Stream of groups where the user is a member.
-  /// UPDATED: Now returns a List<Group> model instead of raw Maps.
   Stream<List<Group>> streamUserGroups(String? uid) {
     if (uid == null || uid.isEmpty) {
       return Stream.value([]);
@@ -62,11 +56,8 @@ class FirestoreService {
         );
   }
 
-  /// Fetches the details of all members in a group (Names, Emails, Roles).
-  /// This is needed to display "Mario" instead of "user_123".
   Future<List<GroupMember>> getGroupMembers(String groupId) async {
     try {
-      // 1. Fetch the group document to get the member list and admin ID
       final groupDoc = await _db.collection('groups').doc(groupId).get();
       if (!groupDoc.exists) return [];
 
@@ -77,9 +68,7 @@ class FirestoreService {
 
       List<GroupMember> members = [];
 
-      // 2. Fetch user documents.
-      // Firestore 'whereIn' is limited to 10 values per query.
-      // We process the IDs in chunks of 10 to avoid errors with large groups.
+      // Fetch in chunks of 10 (Firestore limit for 'whereIn')
       for (var i = 0; i < memberIds.length; i += 10) {
         final end = (i + 10 < memberIds.length) ? i + 10 : memberIds.length;
         final chunk = memberIds.sublist(i, end);
@@ -91,10 +80,7 @@ class FirestoreService {
 
         for (var doc in usersSnapshot.docs) {
           final user = AppUser.fromFirestore(doc);
-          
-          // Determine the role (Admin vs Member)
           final role = (user.uid == group.adminId) ? 'admin' : 'member';
-          
           members.add(GroupMember.fromUser(user, role: role));
         }
       }
@@ -106,7 +92,6 @@ class FirestoreService {
     }
   }
 
-  /// Join a group using the invite code.
   Future<void> joinGroupByCode({
     required String uid,
     required String inviteCode,
@@ -118,7 +103,7 @@ class FirestoreService {
         .get();
 
     if (querySnapshot.docs.isEmpty) {
-      throw Exception('Invalid invite code. Please check and try again.');
+      throw Exception('Invalid invite code.');
     }
 
     final groupDoc = querySnapshot.docs.first;
@@ -144,29 +129,29 @@ class FirestoreService {
 
   // --- EXPENSES ---
 
-  /// Adds a new expense to the specified group.
   Future<void> addExpense({
     required String groupId,
     required String description,
     required double amount,
     required String payerId,
+    required List<String> splitWith, // Updated to include split details
   }) async {
-    // We could use Expense(...).toJson() here, but passing primitives is fine too
     await _db.collection('groups').doc(groupId).collection('expenses').add({
       'description': description,
       'amount': amount,
       'payerId': payerId,
+      'splitWith': splitWith,
       'timestamp': FieldValue.serverTimestamp(),
     });
   }
 
-  /// Updates an existing expense.
   Future<void> updateExpense({
     required String groupId,
     required String expenseId,
     required String description,
     required double amount,
     required String payerId,
+    required List<String> splitWith,
   }) async {
     await _db
         .collection('groups')
@@ -177,11 +162,11 @@ class FirestoreService {
           'description': description,
           'amount': amount,
           'payerId': payerId,
+          'splitWith': splitWith,
           'updatedAt': FieldValue.serverTimestamp(),
         });
   }
 
-  /// Stream of total balance for a group
   Stream<double> streamGroupTotalBalance(String groupId) {
     return _db
         .collection('groups')
@@ -198,7 +183,6 @@ class FirestoreService {
         });
   }
 
-  /// Stream of members count for a group
   Stream<int> streamGroupMembersCount(String groupId) {
     return _db.collection('groups').doc(groupId).snapshots().map((doc) {
       final members = doc['members'] as List? ?? [];

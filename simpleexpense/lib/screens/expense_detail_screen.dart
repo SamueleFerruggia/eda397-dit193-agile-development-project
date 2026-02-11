@@ -9,12 +9,14 @@ class ExpenseDetailScreen extends StatefulWidget {
   final String description;
   final double amount;
   final String payerId;
+  final List<String> splitWith; // List of members involved in the split
 
   const ExpenseDetailScreen({
     super.key,
     required this.description,
     required this.amount,
     required this.payerId,
+    required this.splitWith,
   });
 
   @override
@@ -27,23 +29,15 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // UPDATED: Accessing memberIds from the Group model
-      final members = context.read<GroupsProvider>().selectedGroup?.memberIds;
-      
-      if (members != null) {
-        setState(() {
-          _selectedMemberIds = members.toSet();
-        });
-      }
-    });
+    // Initialize selection based on the saved split data
+    _selectedMemberIds = widget.splitWith.toSet();
   }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<GroupsProvider>(
       builder: (context, groupsProvider, _) {
-        // UPDATED: Accessing properties from the Group model
+        // Get all group members to display the full list
         final members = groupsProvider.selectedGroup?.memberIds ?? [];
         final currency = groupsProvider.currentCurrency ?? 'SEK';
         final currentUser = FirebaseAuth.instance.currentUser;
@@ -151,7 +145,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                   itemBuilder: (context, index) {
                                     final memberId = members[index];
                                     final isMe = memberId == currentUser?.uid;
-                                    // Placeholder for name until we implement Member fetching
+                                    // Placeholder for name until we implement Member fetching in this screen
                                     final displayName = isMe ? 'Me' : 'User...${memberId.substring(0, 4)}';
                                     final isSelected = _selectedMemberIds.contains(memberId);
 
@@ -184,7 +178,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                             ),
                                             Text(
                                               isSelected
-                                                  ? '${splitAmount.toStringAsFixed(0)} ${currency.substring(0, min(2, currency.length))}' // Safe substring
+                                                  ? '${splitAmount.toStringAsFixed(0)} ${currency.substring(0, min(2, currency.length))}' 
                                                   : '0 $currency',
                                               style: const TextStyle(
                                                 fontSize: 14,

@@ -9,7 +9,7 @@ import '../models/models.dart';
 class ExpenseSplitScreen extends StatefulWidget {
   final String description;
   final double amount;
-  final String payerId; // 'Me' or real UID
+  final String payerId;
 
   const ExpenseSplitScreen({
     super.key,
@@ -25,11 +25,7 @@ class ExpenseSplitScreen extends StatefulWidget {
 class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
   bool _isSaving = false;
   bool _isLoadingMembers = true;
-  
-  // We store the full GroupMember objects to display names
   List<GroupMember> _members = [];
-  
-  // Set of selected UIDs for splitting
   Set<String> _selectedMemberIds = {};
 
   @override
@@ -38,26 +34,21 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
     _loadGroupMembers();
   }
 
-  /// Fetches the real names of the group members
   Future<void> _loadGroupMembers() async {
     final provider = context.read<GroupsProvider>();
     final groupId = provider.currentGroupId;
 
     if (groupId != null) {
       try {
-        // Fetch detailed member info (Name, Email, etc.)
         final members = await FirestoreService().getGroupMembers(groupId);
-        
         if (mounted) {
           setState(() {
             _members = members;
-            // Default: Select all members
             _selectedMemberIds = members.map((m) => m.uid).toSet();
             _isLoadingMembers = false;
           });
         }
       } catch (e) {
-        print("Error loading members: $e");
         if (mounted) setState(() => _isLoadingMembers = false);
       }
     }
@@ -75,7 +66,6 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
         throw Exception("Error info missing");
       }
 
-      // Resolve who is the actual payer
       final actualPayerId = widget.payerId == 'Me'
           ? currentUser.uid
           : widget.payerId;
@@ -85,11 +75,11 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
         description: widget.description,
         amount: widget.amount,
         payerId: actualPayerId,
+        splitWith: _selectedMemberIds.toList(), // Pass selected members
       );
 
       if (!mounted) return;
       
-      // Pop twice to go back to Dashboard
       Navigator.of(context).pop();
       Navigator.of(context).pop();
 
@@ -114,7 +104,6 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
     final currency = groupsProvider.currentCurrency ?? 'SEK';
     final currentUser = FirebaseAuth.instance.currentUser;
 
-    // Calculate split amount (Equally)
     final splitAmount = _selectedMemberIds.isEmpty
         ? 0.0
         : widget.amount / _selectedMemberIds.length;
@@ -154,7 +143,6 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Members List
                   Expanded(
                     child: _isLoadingMembers
                         ? const Center(child: CircularProgressIndicator())
@@ -164,7 +152,6 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                               final member = _members[index];
                               final isMe = member.uid == currentUser?.uid;
                               
-                              // Display real name or 'Me'
                               final displayName = isMe ? "Me (${member.name})" : member.name;
                               final isSelected = _selectedMemberIds.contains(member.uid);
 
@@ -212,7 +199,6 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                           ),
                   ),
 
-                  // Split button (UI Only for now)
                   Row(
                     children: [
                       Expanded(
@@ -231,7 +217,6 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
             ),
           ),
 
-          // SAVE button
           Container(
             padding: const EdgeInsets.all(24),
             color: AppTheme.white,

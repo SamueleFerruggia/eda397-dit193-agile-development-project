@@ -143,6 +143,7 @@ class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
                     '${expense.amount.toStringAsFixed(2)} $currency',
                     expense.amount,
                     expense.payerId,
+                    expense.splitWith, // Pass split info
                   );
                 },
               ),
@@ -225,6 +226,7 @@ class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
     String amountString,
     double rawAmount,
     String payerId,
+    List<String> splitWith, // Added parameter
   ) {
     return GestureDetector(
       onTap: () {
@@ -234,6 +236,7 @@ class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
               description: title,
               amount: rawAmount,
               payerId: payerId,
+              splitWith: splitWith, // Pass to details
             ),
           ),
         );
