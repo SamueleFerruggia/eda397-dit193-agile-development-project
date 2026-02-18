@@ -5,6 +5,7 @@ import 'package:simpleexpense/providers/groups_provider.dart';
 import 'package:simpleexpense/screens/add_expense_screen.dart';
 import 'package:simpleexpense/screens/expense_detail_screen.dart';
 import 'package:simpleexpense/screens/expense_list_screen.dart';
+import 'package:simpleexpense/screens/balance_screen.dart';
 import 'package:simpleexpense/theme/app_theme.dart';
 import 'package:simpleexpense/screens/widgets/expense_widgets.dart';
 import '../models/models.dart'; // Import models
@@ -80,6 +81,33 @@ class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 32,
+                                vertical: 16,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          // Balances Button
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => BalanceScreen(groupId: widget.groupId),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.account_balance_wallet, size: 32),
+                            label: const Text(
+                              'Balances',
+                              style: TextStyle(fontSize: 18),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 32,
