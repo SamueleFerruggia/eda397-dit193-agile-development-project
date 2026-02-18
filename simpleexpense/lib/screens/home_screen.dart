@@ -6,7 +6,7 @@ import 'package:simpleexpense/screens/group_dashboard.dart';
 import 'package:simpleexpense/screens/login_screen.dart';
 import 'package:simpleexpense/theme/app_theme.dart';
 import 'create_group_step1.dart';
-import 'join_group_screen.dart'; 
+import 'join_group_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
