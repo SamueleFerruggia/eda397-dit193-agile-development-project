@@ -60,18 +60,18 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     final currency = context.watch<GroupsProvider>().currentCurrency ?? 'SEK';
 
     return Scaffold(
-      backgroundColor: AppTheme.lightGray,
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
-        backgroundColor: AppTheme.lightGray,
+        backgroundColor: AppTheme.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.darkGray),
+          icon: const Icon(Icons.arrow_back, color: AppTheme.textDark),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
           'Add Expense',
           style: TextStyle(
-            color: AppTheme.darkGray,
+            color: AppTheme.textDark,
             fontSize: 18,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.5,
@@ -83,7 +83,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           Expanded(
             child: Container(
               width: double.infinity,
-              color: AppTheme.white,
+              color: AppTheme.textLight,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -93,7 +93,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     decoration: InputDecoration(
                       hintText: 'What is this for?',
                       filled: true,
-                      fillColor: AppTheme.white,
+                      fillColor: AppTheme.textLight,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -111,7 +111,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                           decoration: InputDecoration(
                             hintText: '0.00',
                             filled: true,
-                            fillColor: AppTheme.white,
+                            fillColor: AppTheme.textLight,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -156,13 +156,13 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           ),
           Container(
             padding: const EdgeInsets.all(24),
-            color: AppTheme.white,
+            color: AppTheme.textLight,
             child: SizedBox(
               height: 52,
               child: ElevatedButton(
                 onPressed: _handleNext, // Call Next
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.darkGray,
+                  backgroundColor: AppTheme.primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),

@@ -47,7 +47,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
             : widget.amount / _selectedMemberIds.length;
 
         return Scaffold(
-          backgroundColor: AppTheme.darkGray,
+          backgroundColor: AppTheme.primary,
           body: SafeArea(
             child: Column(
               children: [
@@ -57,7 +57,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                 Expanded(
                   child: Container(
                     width: double.infinity,
-                    decoration: const BoxDecoration(color: AppTheme.white),
+                    decoration: const BoxDecoration(color: AppTheme.textLight),
                     child: SingleChildScrollView(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -97,7 +97,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w500,
-                                    color: AppTheme.darkGray,
+                                    color: AppTheme.textDark,
                                   ),
                                 ),
                                 Text(
@@ -105,7 +105,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: AppTheme.darkGray,
+                                    color: AppTheme.textDark,
                                   ),
                                 ),
                               ],
@@ -123,7 +123,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                               'Split: equally',
                               style: const TextStyle(
                                 fontSize: 14,
-                                color: AppTheme.darkGray,
+                                color: AppTheme.textDark,
                                 height: 1.6,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -164,7 +164,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                           children: [
                                             Checkbox(
                                               value: isSelected,
-                                              activeColor: AppTheme.darkGray,
+                                              activeColor: AppTheme.primary,
                                               onChanged: null, // Read-only view
                                             ),
                                             Expanded(
@@ -172,7 +172,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                                 displayName,
                                                 style: const TextStyle(
                                                   fontSize: 14,
-                                                  color: AppTheme.darkGray,
+                                                  color: AppTheme.textDark,
                                                 ),
                                               ),
                                             ),
@@ -183,7 +183,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                               style: const TextStyle(
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.bold,
-                                                color: AppTheme.darkGray,
+                                                color: AppTheme.textDark,
                                               ),
                                             ),
                                           ],
@@ -230,7 +230,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                   child: ElevatedButton(
                                     onPressed: () {},
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppTheme.darkGray,
+                                      backgroundColor: AppTheme.primary,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(4),
                                       ),

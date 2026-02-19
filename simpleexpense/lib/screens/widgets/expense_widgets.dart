@@ -18,7 +18,7 @@ class ExpenseHeaderWidget extends StatelessWidget {
           return Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppTheme.white),
+                icon: const Icon(Icons.arrow_back, color: AppTheme.textLight),
                 onPressed: () => Navigator.of(context).pop(),
               ),
               const Spacer(),
@@ -38,7 +38,7 @@ class ExpenseHeaderWidget extends StatelessWidget {
                     const Text(
                       'Share Invite Code',
                       style: TextStyle(
-                        color: AppTheme.middleGray,
+                        color: AppTheme.secondaryDark,
                         fontSize: 11,
                         fontWeight: FontWeight.w400,
                       ),
@@ -50,7 +50,7 @@ class ExpenseHeaderWidget extends StatelessWidget {
                         Text(
                           inviteCode,
                           style: const TextStyle(
-                            color: AppTheme.white,
+                            color: AppTheme.textLight,
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1,
@@ -59,7 +59,7 @@ class ExpenseHeaderWidget extends StatelessWidget {
                         const SizedBox(width: 6),
                         const Icon(
                           Icons.share,
-                          color: AppTheme.white,
+                          color: AppTheme.textLight,
                           size: 14,
                         ),
                       ],
@@ -91,7 +91,7 @@ class GroupInfoWidget extends StatelessWidget {
               Container(
                 width: 56,
                 height: 56,
-                decoration: BoxDecoration(color: AppTheme.lightGray),
+                decoration: BoxDecoration(color: AppTheme.background),
               ),
               const SizedBox(width: 12),
               Column(
@@ -102,7 +102,7 @@ class GroupInfoWidget extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.darkGray,
+                      color: AppTheme.textDark,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -111,7 +111,7 @@ class GroupInfoWidget extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.darkGray,
+                      color: AppTheme.textDark,
                     ),
                   ),
                 ],

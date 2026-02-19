@@ -41,17 +41,17 @@ class _BalanceScreenState extends State<BalanceScreen> {
 
         if (!isGroupLoaded) {
           return Scaffold(
-            backgroundColor: AppTheme.darkGray,
+            backgroundColor: AppTheme.primary,
             body: SafeArea(
               child: Center(
-                child: CircularProgressIndicator(color: AppTheme.white),
+                child: CircularProgressIndicator(color: AppTheme.textLight),
               ),
             ),
           );
         }
 
         return Scaffold(
-          backgroundColor: AppTheme.darkGray,
+          backgroundColor: AppTheme.primary,
           body: SafeArea(
             child: Column(
               children: [
@@ -60,7 +60,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
                 Expanded(
                   child: Container(
                     width: double.infinity,
-                    color: AppTheme.white,
+                    color: AppTheme.textLight,
                     child: _buildBalanceView(context, groupsProvider),
                   ),
                 ),
@@ -85,7 +85,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: AppTheme.darkGray),
+            child: CircularProgressIndicator(color: AppTheme.primary),
           );
         }
 
@@ -93,7 +93,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
           return Center(
             child: Text(
               'Error loading balances',
-              style: TextStyle(color: AppTheme.darkGray),
+              style: TextStyle(color: AppTheme.primary),
             ),
           );
         }
@@ -108,7 +108,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
           builder: (context, memberSnapshot) {
             if (!memberSnapshot.hasData) {
               return const Center(
-                child: CircularProgressIndicator(color: AppTheme.darkGray),
+                child: CircularProgressIndicator(color: AppTheme.primary),
               );
             }
 
@@ -147,7 +147,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
       style: const TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.bold,
-        color: AppTheme.darkGray,
+        color: AppTheme.primary,
       ),
     );
   }
@@ -192,7 +192,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
     final isSettled = !isPositive && !isNegative;
 
     Color cardColor = Colors.grey.shade100;
-    Color textColor = AppTheme.darkGray;
+    Color textColor = AppTheme.textDark;
     String statusText = 'Settled up';
     IconData icon = Icons.check_circle;
 
@@ -215,7 +215,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
         color: cardColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isCurrentUser ? AppTheme.darkGray : Colors.transparent,
+          color: isCurrentUser ? AppTheme.primary : Colors.transparent,
           width: 2,
         ),
       ),
@@ -232,7 +232,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.darkGray,
+                    color: AppTheme.textDark,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -240,7 +240,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
                   statusText,
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppTheme.middleGray,
+                    color: AppTheme.secondaryDark,
                   ),
                 ),
               ],
@@ -287,7 +287,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
                   'Everyone is even in this group',
                   style: TextStyle(
                     fontSize: 14,
-                    color: AppTheme.middleGray,
+                    color: AppTheme.secondaryDark,
                   ),
                 ),
               ],
@@ -371,14 +371,14 @@ class _BalanceScreenState extends State<BalanceScreen> {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.darkGray,
+                        color: AppTheme.textDark,
                       ),
                     ),
                     const SizedBox(width: 8),
                     Icon(
                       Icons.arrow_forward,
                       size: 16,
-                      color: AppTheme.middleGray,
+                      color: AppTheme.secondaryDark,
                     ),
                     const SizedBox(width: 8),
                     Text(
@@ -386,7 +386,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.darkGray,
+                        color: AppTheme.textDark,
                       ),
                     ),
                   ],

@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:simpleexpense/theme/app_theme.dart';
 import 'create_group_step2.dart';
 
-class CreateGroupStep1 extends StatelessWidget {
-  CreateGroupStep1({super.key});
+class CreateGroupStep1 extends StatefulWidget {
+  const CreateGroupStep1({super.key});
 
+  @override
+  State<CreateGroupStep1> createState() => _CreateGroupStep1State();
+}
+
+class _CreateGroupStep1State extends State<CreateGroupStep1> {
   final _formKey = GlobalKey<FormState>();
   String _savedName = '';
 
@@ -21,7 +26,7 @@ class CreateGroupStep1 extends StatelessWidget {
             letterSpacing: 0.5,
           ),
         ),
-        backgroundColor: AppTheme.lightGray,
+        backgroundColor: AppTheme.background,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
@@ -79,7 +84,7 @@ class CreateGroupStep1 extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.darkGray,
+                    backgroundColor: AppTheme.primary,
                   ),
                   child: const Text('Next', style: TextStyle(fontSize: 16)),
                   onPressed: () {

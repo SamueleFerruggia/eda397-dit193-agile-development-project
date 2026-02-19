@@ -63,7 +63,7 @@ class _CreateGroupStep2State extends State<CreateGroupStep2> {
             letterSpacing: 0.5,
           ),
         ),
-        backgroundColor: AppTheme.lightGray,
+        backgroundColor: AppTheme.background,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
@@ -141,7 +141,7 @@ class _CreateGroupStep2State extends State<CreateGroupStep2> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        border: Border.all(color: AppTheme.middleGray),
+                        border: Border.all(color: AppTheme.secondaryDark),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: GestureDetector(
@@ -156,7 +156,7 @@ class _CreateGroupStep2State extends State<CreateGroupStep2> {
                             const Text(
                               'Share Invite Code',
                               style: TextStyle(
-                                color: AppTheme.darkGray,
+                                color: AppTheme.textDark,
                                 fontSize: 14,
                               ),
                             ),
@@ -166,7 +166,7 @@ class _CreateGroupStep2State extends State<CreateGroupStep2> {
                                 Text(
                                   _inviteCode,
                                   style: const TextStyle(
-                                    color: AppTheme.darkGray,
+                                    color: AppTheme.textDark,
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 1,
@@ -175,7 +175,7 @@ class _CreateGroupStep2State extends State<CreateGroupStep2> {
                                 const SizedBox(width: 6),
                                 const Icon(
                                   Icons.share,
-                                  color: AppTheme.darkGray,
+                                  color: AppTheme.textDark,
                                   size: 14,
                                 ),
                               ],
@@ -195,7 +195,7 @@ class _CreateGroupStep2State extends State<CreateGroupStep2> {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.darkGray,
+                    backgroundColor: AppTheme.primary,
                   ),
                   child: const Text('Next', style: TextStyle(fontSize: 16)),
                   onPressed: () {
