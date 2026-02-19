@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:simpleexpense/providers/groups_provider.dart';
 import 'package:simpleexpense/screens/add_expense_screen.dart';
 import 'package:simpleexpense/screens/expense_detail_screen.dart';
+import 'package:simpleexpense/screens/expense_list_screen.dart';
+import 'package:simpleexpense/screens/balance_screen.dart';
 import 'package:simpleexpense/theme/app_theme.dart';
 import 'package:simpleexpense/screens/widgets/expense_widgets.dart';
 import '../models/models.dart';
@@ -54,12 +56,92 @@ class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
               children: [
                 const ExpenseHeaderWidget(),
                 const GroupInfoWidget(),
-                // Main content area
+                // Main content area - Show buttons instead of expense list
                 Expanded(
                   child: Container(
                     width: double.infinity,
                     decoration: const BoxDecoration(color: AppTheme.white),
-                    child: _buildExpensesView(context, groupsProvider),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // My Expenses Button
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => ExpenseListScreen(groupId: widget.groupId),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.list_alt, size: 32),
+                            label: const Text(
+                              'My Expenses',
+                              style: TextStyle(fontSize: 18),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 32,
+                                vertical: 16,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          // Balances Button
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => BalanceScreen(groupId: widget.groupId),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.account_balance_wallet, size: 32),
+                            label: const Text(
+                              'Balances',
+                              style: TextStyle(fontSize: 18),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 32,
+                                vertical: 16,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          // Add Expense Button
+                          ElevatedButton.icon(
+                            onPressed: () => _navigateToAddExpense(context),
+                            icon: const Icon(Icons.add, size: 32),
+                            label: const Text(
+                              'Add Expense',
+                              style: TextStyle(fontSize: 18),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.darkGray,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 32,
+                                vertical: 16,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ],
