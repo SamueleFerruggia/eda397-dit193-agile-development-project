@@ -20,6 +20,20 @@ void main() {
       expect(isValidEmail('user@'), false);
       expect(isValidEmail('user @example.com'), false);
     });
+
+    test('Email edge cases are handled correctly', () {
+      // Uppercase characters should still be valid
+      expect(isValidEmail('USER@EXAMPLE.COM'), true);
+
+      // Leading / trailing whitespace should be rejected
+      expect(isValidEmail(' user@example.com'), false);
+      expect(isValidEmail('user@example.com '), false);
+
+      // Clearly malformed structures
+      expect(isValidEmail('user@@example.com'), false);
+      expect(isValidEmail('user@example'), false); // missing TLD
+      expect(isValidEmail('user@.com'), false); // missing domain name
+    });
   });
 
   group('Password Validation', () {
@@ -34,6 +48,17 @@ void main() {
       expect(isValidPassword('12345'), false);
       expect(isValidPassword('abc'), false);
     });
+
+    test('Password length boundary conditions', () {
+      // Exactly 6 characters should be valid
+      expect(isValidPassword('123456'), true);
+
+      // Just above the boundary remains valid
+      expect(isValidPassword('1234567'), true);
+
+      // Very long but still valid passwords
+      expect(isValidPassword('a' * 50), true);
+    });
   });
 
   group('Password Matching', () {
@@ -45,6 +70,15 @@ void main() {
     test('Non-matching passwords return false', () {
       expect(passwordsMatch('password123', 'password456'), false);
       expect(passwordsMatch('Test@123', 'test@123'), false);
+    });
+
+    test('Empty and partially empty passwords', () {
+      // Both empty still "match"
+      expect(passwordsMatch('', ''), true);
+
+      // Only one empty should not match
+      expect(passwordsMatch('password123', ''), false);
+      expect(passwordsMatch('', 'password123'), false);
     });
   });
 
@@ -70,6 +104,16 @@ void main() {
     test('Non-matching passwords fail sign up', () {
       expect(passwordsMatch('password123', 'password456'), false);
     });
+
+    test('Multiple invalid fields fail sign up', () {
+      const badEmail = 'invalid';
+      const weakPassword = '123';
+      const confirmPassword = '456';
+
+      expect(isValidEmail(badEmail), false);
+      expect(isValidPassword(weakPassword), false);
+      expect(passwordsMatch(weakPassword, confirmPassword), false);
+    });
   });
 
   group('Sign In Validation', () {
@@ -88,13 +132,24 @@ void main() {
     test('Empty password fails sign in', () {
       expect(isValidPassword(''), false);
     });
+
+    test('Invalid email format fails sign in', () {
+      expect(isValidEmail('invalid'), false);
+      expect(isValidEmail('user@'), false);
+    });
+
+    test('Too short password fails sign in', () {
+      expect(isValidPassword('12345'), false);
+    });
   });
 }
 
 // Validation helper functions
 bool isValidEmail(String email) {
   if (email.isEmpty) return false;
-  final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+  final emailRegex = RegExp(
+    r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+  );
   return emailRegex.hasMatch(email);
 }
 

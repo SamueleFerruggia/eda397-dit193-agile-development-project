@@ -146,11 +146,16 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                     final memberId = members[index];
                                     final isMe = memberId == currentUser?.uid;
                                     // Placeholder for name until we implement Member fetching in this screen
-                                    final displayName = isMe ? 'Me' : 'User...${memberId.substring(0, 4)}';
-                                    final isSelected = _selectedMemberIds.contains(memberId);
+                                    final displayName = isMe
+                                        ? 'Me'
+                                        : 'User...${memberId.substring(0, 4)}';
+                                    final isSelected = _selectedMemberIds
+                                        .contains(memberId);
 
                                     return Padding(
-                                      padding: const EdgeInsets.only(bottom: 12),
+                                      padding: const EdgeInsets.only(
+                                        bottom: 12,
+                                      ),
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(
                                           horizontal: 12,
@@ -158,7 +163,9 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                         ),
                                         decoration: BoxDecoration(
                                           color: Colors.grey.shade300,
-                                          borderRadius: BorderRadius.circular(4),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
                                         ),
                                         child: Row(
                                           children: [
@@ -178,7 +185,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                             ),
                                             Text(
                                               isSelected
-                                                  ? '${splitAmount.toStringAsFixed(0)} ${currency.substring(0, min(2, currency.length))}' 
+                                                  ? '${splitAmount.toStringAsFixed(0)} ${currency.substring(0, min(2, currency.length))}'
                                                   : '0 $currency',
                                               style: const TextStyle(
                                                 fontSize: 14,
@@ -209,7 +216,9 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                   child: OutlinedButton(
                                     onPressed: () {},
                                     style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(color: Colors.grey),
+                                      side: const BorderSide(
+                                        color: Colors.grey,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(4),
                                       ),
@@ -261,7 +270,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
       },
     );
   }
-  
+
   // Helper for safe substring
   int min(int a, int b) => a < b ? a : b;
 }

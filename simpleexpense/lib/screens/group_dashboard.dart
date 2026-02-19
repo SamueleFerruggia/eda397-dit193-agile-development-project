@@ -6,7 +6,7 @@ import 'package:simpleexpense/screens/add_expense_screen.dart';
 import 'package:simpleexpense/screens/expense_detail_screen.dart';
 import 'package:simpleexpense/theme/app_theme.dart';
 import 'package:simpleexpense/screens/widgets/expense_widgets.dart';
-import '../models/models.dart'; // Import models
+import '../models/models.dart';
 
 class GroupDashboardScreen extends StatefulWidget {
   final String groupId;
