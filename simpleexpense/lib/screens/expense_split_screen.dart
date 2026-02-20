@@ -26,7 +26,9 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
   bool _isSaving = false;
   bool _isLoadingMembers = true;
   List<GroupMember> _members = [];
-  Set<String> _selectedMemberIds = {};
+  Map<String, double> _splitAmounts = {}; // userId -> amount
+  Map<String, TextEditingController> _controllers = {}; // userId -> controller
+  bool _useEqualSplit = true;
 
   @override
   void initState() {
@@ -44,7 +46,14 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
         if (mounted) {
           setState(() {
             _members = members;
-            _selectedMemberIds = members.map((m) => m.uid).toSet();
+            // Initialize equal split among all members
+            final equalAmount = widget.amount / members.length;
+            for (final member in members) {
+              _splitAmounts[member.uid] = equalAmount;
+              _controllers[member.uid] = TextEditingController(
+                text: equalAmount.toStringAsFixed(2),
+              );
+            }
             _isLoadingMembers = false;
           });
         }
@@ -54,32 +63,79 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
     }
   }
 
+  void _splitEqually() {
+    final equalAmount = widget.amount / _members.length;
+    setState(() {
+      _useEqualSplit = true;
+      for (final member in _members) {
+        _splitAmounts[member.uid] = equalAmount;
+        _controllers[member.uid]?.text = equalAmount.toStringAsFixed(2);
+      }
+    });
+  }
+
+  void _updateAmount(String memberId, String value) {
+    final amount = double.tryParse(value) ?? 0.0;
+    setState(() {
+      _useEqualSplit = false;
+      _splitAmounts[memberId] = amount;
+    });
+  }
+
+  double _getTotalSplit() {
+    return _splitAmounts.values.fold(0.0, (sum, amount) => sum + amount);
+  }
+
+  bool _isValidSplit() {
+    final total = _getTotalSplit();
+    return (total - widget.amount).abs() < 0.01; // Allow for floating point errors
+  }
+
   void _handleSave() async {
+    if (!_isValidSplit()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Split amounts must equal ${widget.amount.toStringAsFixed(2)}. Current total: ${_getTotalSplit().toStringAsFixed(2)}',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isSaving = true);
 
     try {
       final groupsProvider = context.read<GroupsProvider>();
       final groupId = groupsProvider.currentGroupId;
-      final currentUser = FirebaseAuth.instance.currentUser;
 
-      if (groupId == null || currentUser == null) {
+      if (groupId == null) {
         throw Exception("Error info missing");
       }
 
-      final actualPayerId = widget.payerId == 'Me'
-          ? currentUser.uid
-          : widget.payerId;
+      // Only include members with amounts > 0
+      final validSplits = <String, double>{};
+      _splitAmounts.forEach((userId, amount) {
+        if (amount > 0) {
+          validSplits[userId] = amount;
+        }
+      });
+
+      if (validSplits.isEmpty) {
+        throw Exception("At least one person must have an amount assigned");
+      }
 
       await FirestoreService().addExpense(
         groupId: groupId,
         description: widget.description,
         amount: widget.amount,
-        payerId: actualPayerId,
-        splitWith: _selectedMemberIds.toList(), // Pass selected members
+        payerId: widget.payerId,
+        splitAmounts: validSplits,
       );
 
       if (!mounted) return;
-      
+
       Navigator.of(context).pop();
       Navigator.of(context).pop();
 
@@ -99,20 +155,27 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
   }
 
   @override
+  void dispose() {
+    for (final controller in _controllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final groupsProvider = context.watch<GroupsProvider>();
     final currency = groupsProvider.currentCurrency ?? 'SEK';
     final currentUser = FirebaseAuth.instance.currentUser;
-
-    final splitAmount = _selectedMemberIds.isEmpty
-        ? 0.0
-        : widget.amount / _selectedMemberIds.length;
+    final totalSplit = _getTotalSplit();
+    final difference = (totalSplit - widget.amount).abs();
+    final isValid = difference < 0.01;
 
     return Scaffold(
       backgroundColor: AppTheme.lightGray,
       appBar: AppBar(
         title: const Text(
-          'Add expense',
+          'Split Expense',
           style: TextStyle(color: AppTheme.darkGray),
         ),
         backgroundColor: AppTheme.lightGray,
@@ -129,103 +192,179 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
               color: AppTheme.white,
               padding: const EdgeInsets.all(24),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Text(
-                    'Splitting',
+                    'How to split?',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
+                  const SizedBox(height: 8),
                   Text(
                     '${widget.amount.toStringAsFixed(2)} $currency',
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
+                      color: AppTheme.darkGray,
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
 
+                  // Equal split button
+                  SizedBox(
+                    height: 40,
+                    child: ElevatedButton(
+                      onPressed: _splitEqually,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            _useEqualSplit ? AppTheme.darkGray : Colors.grey[300],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      child: Text(
+                        'Split Equally',
+                        style: TextStyle(
+                          color: _useEqualSplit ? Colors.white : Colors.black,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Member list with custom amounts
                   Expanded(
                     child: _isLoadingMembers
                         ? const Center(child: CircularProgressIndicator())
-                        : ListView.builder(
-                            itemCount: _members.length,
-                            itemBuilder: (context, index) {
-                              final member = _members[index];
-                              final isMe = member.uid == currentUser?.uid;
-                              
-                              final displayName = isMe ? "Me (${member.name})" : member.name;
-                              final isSelected = _selectedMemberIds.contains(member.uid);
+                        : SingleChildScrollView(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                ListView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: _members.length,
+                                  itemBuilder: (context, index) {
+                                    final member = _members[index];
+                                    final isMe = member.uid == currentUser?.uid;
+                                    final displayName = isMe
+                                        ? "Me (${member.name})"
+                                        : member.name;
+                                    final controller =
+                                        _controllers[member.uid]!;
 
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 8),
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey.shade200),
-                                  borderRadius: BorderRadius.circular(4),
+                                    return Container(
+                                      margin: const EdgeInsets.only(bottom: 12),
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: Colors.grey.shade200,
+                                        ),
+                                        borderRadius:
+                                            BorderRadius.circular(4),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            displayName,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              color: AppTheme.darkGray,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          TextField(
+                                            controller: controller,
+                                            keyboardType: const TextInputType
+                                                .numberWithOptions(
+                                              decimal: true,
+                                            ),
+                                            decoration: InputDecoration(
+                                              hintText: '0.00',
+                                              suffix: Text(
+                                                ' $currency',
+                                                style: const TextStyle(
+                                                  color: Colors.grey,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                              border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                                borderSide: const BorderSide(
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                              contentPadding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 12,
+                                                vertical: 8,
+                                              ),
+                                            ),
+                                            onChanged: (value) =>
+                                                _updateAmount(member.uid, value),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
                                 ),
-                                child: CheckboxListTile(
-                                  title: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                const SizedBox(height: 16),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: isValid
+                                        ? Colors.green[50]
+                                        : Colors.red[50],
+                                    border: Border.all(
+                                      color: isValid
+                                          ? Colors.green[300]!
+                                          : Colors.red[300]!,
+                                    ),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(
-                                        displayName,
-                                        style: const TextStyle(
+                                      const Text(
+                                        'Total',
+                                        style: TextStyle(
                                           fontWeight: FontWeight.w500,
-                                          color: AppTheme.darkGray
                                         ),
                                       ),
                                       Text(
-                                        isSelected
-                                            ? '${splitAmount.toStringAsFixed(0)} $currency'
-                                            : '0 $currency',
-                                        style: const TextStyle(
+                                        '${totalSplit.toStringAsFixed(2)} / ${widget.amount.toStringAsFixed(2)} $currency',
+                                        style: TextStyle(
                                           fontWeight: FontWeight.bold,
+                                          color: isValid
+                                              ? Colors.green[700]
+                                              : Colors.red[700],
                                         ),
                                       ),
                                     ],
                                   ),
-                                  value: isSelected,
-                                  activeColor: AppTheme.darkGray,
-                                  onChanged: (val) {
-                                    setState(() {
-                                      if (val == true) {
-                                        _selectedMemberIds.add(member.uid);
-                                      } else {
-                                        _selectedMemberIds.remove(member.uid);
-                                      }
-                                    });
-                                  },
                                 ),
-                              );
-                            },
+                              ],
+                            ),
                           ),
-                  ),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {},
-                          child: const Text(
-                            'Split equally',
-                            style: TextStyle(color: Colors.black),
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ),
             ),
           ),
-
           Container(
             padding: const EdgeInsets.all(24),
             color: AppTheme.white,
             child: SizedBox(
               height: 52,
               child: ElevatedButton(
-                onPressed: _isSaving ? null : _handleSave,
+                onPressed: _isSaving || !isValid ? null : _handleSave,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.darkGray,
+                  backgroundColor: isValid ? AppTheme.darkGray : Colors.grey,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),

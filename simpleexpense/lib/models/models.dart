@@ -110,7 +110,7 @@ class Expense {
   final String description;
   final double amount;
   final String payerId;
-  final List<String> splitWith; // New field for split logic
+  final Map<String, double> splitAmounts; // Map of userId -> amount
   final DateTime timestamp;
 
   Expense({
@@ -118,18 +118,38 @@ class Expense {
     required this.description,
     required this.amount,
     required this.payerId,
-    required this.splitWith,
+    required this.splitAmounts,
     required this.timestamp,
   });
 
   factory Expense.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    
+    // Handle both old format (splitWith as list) and new format (splitAmounts as map)
+    Map<String, double> splitAmounts = {};
+    if (data['splitAmounts'] != null) {
+      // New format
+      final rawSplitAmounts = data['splitAmounts'] as Map<String, dynamic>;
+      splitAmounts = rawSplitAmounts.map((key, value) => 
+        MapEntry(key, (value as num?)?.toDouble() ?? 0.0)
+      );
+    } else if (data['splitWith'] != null) {
+      // Legacy format - convert to equal split
+      final splitWith = List<String>.from(data['splitWith'] ?? []);
+      final splitAmount = splitWith.isEmpty
+          ? 0.0
+          : ((data['amount'] as num?)?.toDouble() ?? 0.0) / splitWith.length;
+      for (final uid in splitWith) {
+        splitAmounts[uid] = splitAmount;
+      }
+    }
+    
     return Expense(
       id: doc.id,
       description: data['description'] ?? '',
       amount: (data['amount'] as num?)?.toDouble() ?? 0.0,
       payerId: data['payerId'] ?? '',
-      splitWith: List<String>.from(data['splitWith'] ?? []),
+      splitAmounts: splitAmounts,
       timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
@@ -139,7 +159,7 @@ class Expense {
       'description': description,
       'amount': amount,
       'payerId': payerId,
-      'splitWith': splitWith,
+      'splitAmounts': splitAmounts,
       'timestamp': Timestamp.fromDate(timestamp),
     };
   }

@@ -134,13 +134,13 @@ class FirestoreService {
     required String description,
     required double amount,
     required String payerId,
-    required List<String> splitWith, // Updated to include split details
+    required Map<String, double> splitAmounts, // Map of userId -> amount
   }) async {
     await _db.collection('groups').doc(groupId).collection('expenses').add({
       'description': description,
       'amount': amount,
       'payerId': payerId,
-      'splitWith': splitWith,
+      'splitAmounts': splitAmounts,
       'timestamp': FieldValue.serverTimestamp(),
     });
   }
@@ -151,7 +151,7 @@ class FirestoreService {
     required String description,
     required double amount,
     required String payerId,
-    required List<String> splitWith,
+    required Map<String, double> splitAmounts,
   }) async {
     await _db
         .collection('groups')
@@ -162,7 +162,7 @@ class FirestoreService {
           'description': description,
           'amount': amount,
           'payerId': payerId,
-          'splitWith': splitWith,
+          'splitAmounts': splitAmounts,
           'updatedAt': FieldValue.serverTimestamp(),
         });
   }
