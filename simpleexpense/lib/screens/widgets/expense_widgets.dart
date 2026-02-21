@@ -245,16 +245,6 @@ class GroupBalanceStatusWidget extends StatelessWidget {
         final currentUserId = authProvider.currentUserId;
 
         if (currentUserId == null) {
-<<<<<<< Updated upstream
-          return Text(
-            '—',
-            style: TextStyle(
-              fontFamily: AppTheme.fontFamilyDisplay,
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-              color: AppTheme.textDark,
-            ),
-=======
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -267,7 +257,6 @@ class GroupBalanceStatusWidget extends StatelessWidget {
                 ),
               ),
             ],
->>>>>>> Stashed changes
           );
         }
 
@@ -279,16 +268,6 @@ class GroupBalanceStatusWidget extends StatelessWidget {
               .snapshots(),
           builder: (context, expenseSnapshot) {
             if (!expenseSnapshot.hasData) {
-<<<<<<< Updated upstream
-              return Text(
-                '—',
-                style: TextStyle(
-                  fontFamily: AppTheme.fontFamilyDisplay,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                  color: AppTheme.textDark,
-                ),
-=======
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -301,7 +280,6 @@ class GroupBalanceStatusWidget extends StatelessWidget {
                     ),
                   ),
                 ],
->>>>>>> Stashed changes
               );
             }
 
@@ -313,16 +291,6 @@ class GroupBalanceStatusWidget extends StatelessWidget {
               future: firestoreService.getGroupMembers(groupId),
               builder: (context, memberSnapshot) {
                 if (!memberSnapshot.hasData) {
-<<<<<<< Updated upstream
-                  return Text(
-                    '—',
-                    style: TextStyle(
-                      fontFamily: AppTheme.fontFamilyDisplay,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                      color: AppTheme.textDark,
-                    ),
-=======
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -335,7 +303,6 @@ class GroupBalanceStatusWidget extends StatelessWidget {
                         ),
                       ),
                     ],
->>>>>>> Stashed changes
                   );
                 }
 
@@ -367,16 +334,6 @@ class GroupBalanceStatusWidget extends StatelessWidget {
                   statusColor = AppTheme.textDark;
                 }
 
-<<<<<<< Updated upstream
-                return Text(
-                  statusText,
-                  style: TextStyle(
-                    fontFamily: AppTheme.fontFamilyDisplay,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: statusColor,
-                  ),
-=======
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -400,7 +357,6 @@ class GroupBalanceStatusWidget extends StatelessWidget {
                       ),
                     ],
                   ],
->>>>>>> Stashed changes
                 );
               },
             );

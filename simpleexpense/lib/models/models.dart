@@ -107,40 +107,120 @@ class GroupMember {
 // --- EXPENSE MODEL ---
 class Expense {
   final String id;
+  final String groupId;
   final String description;
   final double amount;
   final String payerId;
-  final List<String> splitWith; // New field for split logic
+  final String payerName;
+  final List<String> splitWith;
+  final String category;
+  final String? notes;
+  final String? receiptUrl;
   final DateTime timestamp;
+  final DateTime? updatedAt;
 
   Expense({
     required this.id,
+    required this.groupId,
     required this.description,
     required this.amount,
     required this.payerId,
+    required this.payerName,
     required this.splitWith,
+    this.category = 'Other',
+    this.notes,
+    this.receiptUrl,
     required this.timestamp,
+    this.updatedAt,
   });
 
   factory Expense.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return Expense(
       id: doc.id,
+      groupId: data['groupId'] ?? '',
       description: data['description'] ?? '',
       amount: (data['amount'] as num?)?.toDouble() ?? 0.0,
       payerId: data['payerId'] ?? '',
+      payerName: data['payerName'] ?? '',
       splitWith: List<String>.from(data['splitWith'] ?? []),
+      category: data['category'] ?? 'Other',
+      notes: data['notes'],
+      receiptUrl: data['receiptUrl'],
       timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
+      'groupId': groupId,
       'description': description,
       'amount': amount,
       'payerId': payerId,
+      'payerName': payerName,
       'splitWith': splitWith,
+      'category': category,
+      'notes': notes,
+      'receiptUrl': receiptUrl,
       'timestamp': Timestamp.fromDate(timestamp),
+      'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
     };
   }
+
+  // Calculate the amount each person owes (equal split)
+  double get amountPerPerson {
+    if (splitWith.isEmpty) return amount;
+    return amount / splitWith.length;
+  }
+
+  // Check if a specific user is involved in this expense
+  bool involvesUser(String userId) {
+    return payerId == userId || splitWith.contains(userId);
+  }
+
+  // Create a copy with updated fields
+  Expense copyWith({
+    String? id,
+    String? groupId,
+    String? description,
+    double? amount,
+    String? payerId,
+    String? payerName,
+    List<String>? splitWith,
+    String? category,
+    String? notes,
+    String? receiptUrl,
+    DateTime? timestamp,
+    DateTime? updatedAt,
+  }) {
+    return Expense(
+      id: id ?? this.id,
+      groupId: groupId ?? this.groupId,
+      description: description ?? this.description,
+      amount: amount ?? this.amount,
+      payerId: payerId ?? this.payerId,
+      payerName: payerName ?? this.payerName,
+      splitWith: splitWith ?? this.splitWith,
+      category: category ?? this.category,
+      notes: notes ?? this.notes,
+      receiptUrl: receiptUrl ?? this.receiptUrl,
+      timestamp: timestamp ?? this.timestamp,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return 'Expense(id: $id, description: $description, amount: $amount, payerId: $payerId, splitWith: $splitWith)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is Expense && other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
 }
