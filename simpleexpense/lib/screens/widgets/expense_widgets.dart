@@ -207,6 +207,7 @@ class GroupInfoWidget extends StatelessWidget {
                 Text(
                   statusText,
                   style: TextStyle(
+                    fontFamily: AppTheme.fontFamilyDisplay,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: statusColor,
@@ -245,8 +246,9 @@ class GroupBalanceStatusWidget extends StatelessWidget {
           return Text(
             '—',
             style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w400,
+              fontFamily: AppTheme.fontFamilyDisplay,
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
               color: AppTheme.textDark,
             ),
           );
@@ -263,8 +265,9 @@ class GroupBalanceStatusWidget extends StatelessWidget {
               return Text(
                 '—',
                 style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w400,
+                  fontFamily: AppTheme.fontFamilyDisplay,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
                   color: AppTheme.textDark,
                 ),
               );
@@ -281,8 +284,9 @@ class GroupBalanceStatusWidget extends StatelessWidget {
                   return Text(
                     '—',
                     style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w400,
+                      fontFamily: AppTheme.fontFamilyDisplay,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
                       color: AppTheme.textDark,
                     ),
                   );
@@ -315,7 +319,8 @@ class GroupBalanceStatusWidget extends StatelessWidget {
                 return Text(
                   statusText,
                   style: TextStyle(
-                    fontSize: 15,
+                    fontFamily: AppTheme.fontFamilyDisplay,
+                    fontSize: 18,
                     fontWeight: FontWeight.w600,
                     color: statusColor,
                   ),

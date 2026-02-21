@@ -12,8 +12,13 @@ import '../models/models.dart';
 /// Screen displaying net balances and settlement suggestions
 class BalanceScreen extends StatefulWidget {
   final String groupId;
+  final bool embedInParent;
 
-  const BalanceScreen({super.key, required this.groupId});
+  const BalanceScreen({
+    super.key,
+    required this.groupId,
+    this.embedInParent = false,
+  });
 
   @override
   State<BalanceScreen> createState() => _BalanceScreenState();
@@ -50,6 +55,17 @@ class _BalanceScreenState extends State<BalanceScreen> {
           );
         }
 
+        final content = Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: AppTheme.textLight,
+          child: _buildBalanceView(context, groupsProvider),
+        );
+
+        if (widget.embedInParent) {
+          return SizedBox.expand(child: content);
+        }
+
         return Scaffold(
           backgroundColor: AppTheme.primary,
           body: SafeArea(
@@ -57,13 +73,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
               children: [
                 const ExpenseHeaderWidget(),
                 const GroupInfoWidget(),
-                Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    color: AppTheme.textLight,
-                    child: _buildBalanceView(context, groupsProvider),
-                  ),
-                ),
+                Expanded(child: content),
               ],
             ),
           ),
