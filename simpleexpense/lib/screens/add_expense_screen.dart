@@ -5,7 +5,9 @@ import 'package:simpleexpense/theme/app_theme.dart';
 import 'expense_split_screen.dart';
 
 class AddExpenseScreen extends StatefulWidget {
-  const AddExpenseScreen({super.key});
+  final bool embedInParent;
+
+  const AddExpenseScreen({super.key, this.embedInParent = false});
 
   @override
   State<AddExpenseScreen> createState() => _AddExpenseScreenState();
@@ -59,26 +61,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   Widget build(BuildContext context) {
     final currency = context.watch<GroupsProvider>().currentCurrency ?? 'SEK';
 
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        backgroundColor: AppTheme.background,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.textDark),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text(
-          'Add Expense',
-          style: TextStyle(
-            color: AppTheme.textDark,
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.5,
-          ),
-        ),
-      ),
-      body: Column(
+    final body = Column(
         children: [
           Expanded(
             child: Container(
@@ -175,7 +158,35 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             ),
           ),
         ],
+      );
+
+    if (widget.embedInParent) {
+      return Container(
+        color: AppTheme.textLight,
+        child: body,
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: AppTheme.background,
+      appBar: AppBar(
+        backgroundColor: AppTheme.background,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppTheme.textDark),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text(
+          'Add Expense',
+          style: TextStyle(
+            color: AppTheme.textDark,
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.5,
+          ),
+        ),
       ),
+      body: body,
     );
   }
 }

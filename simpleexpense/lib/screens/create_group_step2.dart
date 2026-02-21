@@ -133,83 +133,107 @@ class _CreateGroupStep2State extends State<CreateGroupStep2> {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: _members
-                          .map((m) => Chip(label: Text(m)))
-                          .toList(),
-                    ),
-                    const SizedBox(height: 24),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppTheme.secondaryDark),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: GestureDetector(
-                        onTap: () {
-                          Share.share(
-                            'Join my group "${widget.groupName}" in Simple Expense!\n\nInvite Code: $_inviteCode',
-                            subject: 'Join "${widget.groupName}" group',
-                          );
-                        },
-                        child: Column(
-                          children: [
-                            const Text(
-                              'Share Invite Code',
-                              style: TextStyle(
-                                color: AppTheme.textDark,
-                                fontSize: 14,
-                              ),
-                            ),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  _inviteCode,
-                                  style: const TextStyle(
-                                    color: AppTheme.textDark,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 1,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                const Icon(
-                                  Icons.share,
-                                  color: AppTheme.textDark,
-                                  size: 14,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
+                      children: _members.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final m = entry.value;
+                        final color = index.isEven
+                            ? AppTheme.primaryDark
+                            : AppTheme.primaryLight;
+                        return Chip(
+                          label: Text(m, style: TextStyle(color: color)),
+                          backgroundColor: AppTheme.background,
+                          side: BorderSide(color: color, width: 2),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                        );
+                      }).toList(),
                     ),
                   ],
                 ),
               ),
             ),
             Container(
-              padding: const EdgeInsets.all(16),
-              child: SizedBox(
-                height: 52,
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primary,
-                  ),
-                  child: const Text('Next', style: TextStyle(fontSize: 16)),
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => CreateGroupStep3(
-                          groupName: widget.groupName,
-                          invitedMembers: _members,
-                          inviteCode: _inviteCode,
-                        ),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      Share.share(
+                        'Join my group "${widget.groupName}" in Simple Expense!\n\nInvite Code: $_inviteCode',
+                        subject: 'Join "${widget.groupName}" group',
+                      );
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppTheme.secondaryDark),
+                        borderRadius: BorderRadius.circular(24),
                       ),
-                    );
-                  },
-                ),
+                      child: Column(
+                        children: [
+                          const Text(
+                            'Share Invite Code',
+                            style: TextStyle(
+                              color: AppTheme.textDark,
+                              fontSize: 14,
+                            ),
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                _inviteCode,
+                                style: const TextStyle(
+                                  color: AppTheme.textDark,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              const Icon(
+                                Icons.share,
+                                color: AppTheme.textDark,
+                                size: 14,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 52,
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        foregroundColor: AppTheme.textLight,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(26),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text('Next', style: TextStyle(fontSize: 16)),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => CreateGroupStep3(
+                              groupName: widget.groupName,
+                              invitedMembers: _members,
+                              inviteCode: _inviteCode,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

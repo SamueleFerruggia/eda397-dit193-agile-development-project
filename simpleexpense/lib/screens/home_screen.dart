@@ -210,8 +210,8 @@ class _HomeScreenState extends State<HomeScreen> {
         _buildGroupsList(context),
         // Bottom Bar
         Container(
-          color: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          color: AppTheme.background,
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           child: Row(
             children: [
               Expanded(
@@ -232,7 +232,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: const TextStyle(
                       fontFamily: AppTheme.fontFamilyDisplay,
                       color: AppTheme.textLight,
-                      fontSize: 14,
+                      fontSize: 18,
                       fontWeight: FontWeight.w500,
                     ),
                     icon: const Icon(
@@ -247,6 +247,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           style: TextStyle(
                             fontFamily: AppTheme.fontFamilyDisplay,
                             color: AppTheme.textLight,
+                            fontSize: 18,
                           ),
                         ),
                       ),
@@ -257,6 +258,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           style: TextStyle(
                             fontFamily: AppTheme.fontFamilyDisplay,
                             color: AppTheme.textLight,
+                            fontSize: 18,
                           ),
                         ),
                       ),
@@ -273,22 +275,22 @@ class _HomeScreenState extends State<HomeScreen> {
                   ).push(MaterialPageRoute(builder: (_) => CreateGroupStep1()));
                 },
                 child: Container(
-                  width: 56,
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  width: 68,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
                   decoration: BoxDecoration(
                     color: AppTheme.primary,
-                    borderRadius: BorderRadius.circular(28),
+                    borderRadius: BorderRadius.circular(34),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.add, color: Colors.white, size: 24),
+                      const Icon(Icons.add, color: Colors.white, size: 28),
                       const SizedBox(height: 2),
                       const Text(
                         'Group',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 12,
                           fontWeight: FontWeight.w500,
                           color: AppTheme.textLight,
                         ),
