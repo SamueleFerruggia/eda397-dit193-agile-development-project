@@ -226,11 +226,13 @@ class GroupInfoWidget extends StatelessWidget {
 class GroupBalanceStatusWidget extends StatelessWidget {
   final String groupId;
   final String currency;
+  final String? groupName;
 
   const GroupBalanceStatusWidget({
     super.key,
     required this.groupId,
     required this.currency,
+    this.groupName,
   });
 
   @override
@@ -243,6 +245,7 @@ class GroupBalanceStatusWidget extends StatelessWidget {
         final currentUserId = authProvider.currentUserId;
 
         if (currentUserId == null) {
+<<<<<<< Updated upstream
           return Text(
             '—',
             style: TextStyle(
@@ -251,6 +254,20 @@ class GroupBalanceStatusWidget extends StatelessWidget {
               fontWeight: FontWeight.w500,
               color: AppTheme.textDark,
             ),
+=======
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '—',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: AppTheme.textDark,
+                ),
+              ),
+            ],
+>>>>>>> Stashed changes
           );
         }
 
@@ -262,6 +279,7 @@ class GroupBalanceStatusWidget extends StatelessWidget {
               .snapshots(),
           builder: (context, expenseSnapshot) {
             if (!expenseSnapshot.hasData) {
+<<<<<<< Updated upstream
               return Text(
                 '—',
                 style: TextStyle(
@@ -270,6 +288,20 @@ class GroupBalanceStatusWidget extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                   color: AppTheme.textDark,
                 ),
+=======
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '—',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: AppTheme.textDark,
+                    ),
+                  ),
+                ],
+>>>>>>> Stashed changes
               );
             }
 
@@ -281,6 +313,7 @@ class GroupBalanceStatusWidget extends StatelessWidget {
               future: firestoreService.getGroupMembers(groupId),
               builder: (context, memberSnapshot) {
                 if (!memberSnapshot.hasData) {
+<<<<<<< Updated upstream
                   return Text(
                     '—',
                     style: TextStyle(
@@ -289,6 +322,20 @@ class GroupBalanceStatusWidget extends StatelessWidget {
                       fontWeight: FontWeight.w500,
                       color: AppTheme.textDark,
                     ),
+=======
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '—',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: AppTheme.textDark,
+                        ),
+                      ),
+                    ],
+>>>>>>> Stashed changes
                   );
                 }
 
@@ -301,21 +348,26 @@ class GroupBalanceStatusWidget extends StatelessWidget {
                 final isNegative = myBalance < -0.01;
 
                 String statusText;
+                String amountText;
                 Color statusColor;
 
+                final displayGroupName = groupName ?? 'Group';
+
                 if (isPositive) {
-                  statusText =
-                      'You are owed ${myBalance.toStringAsFixed(2)} $currency';
+                  statusText = '$displayGroupName owes you';
+                  amountText = '${myBalance.toStringAsFixed(0)} $currency';
                   statusColor = AppTheme.secondaryDark;
                 } else if (isNegative) {
-                  statusText =
-                      'You owe ${(-myBalance).toStringAsFixed(2)} $currency';
+                  statusText = 'You owe $displayGroupName';
+                  amountText = '${(-myBalance).toStringAsFixed(0)} $currency';
                   statusColor = AppTheme.primaryDark;
                 } else {
                   statusText = 'Settled up';
+                  amountText = '';
                   statusColor = AppTheme.textDark;
                 }
 
+<<<<<<< Updated upstream
                 return Text(
                   statusText,
                   style: TextStyle(
@@ -324,6 +376,31 @@ class GroupBalanceStatusWidget extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     color: statusColor,
                   ),
+=======
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      statusText,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: AppTheme.textDark,
+                      ),
+                    ),
+                    if (amountText.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        amountText,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: statusColor,
+                        ),
+                      ),
+                    ],
+                  ],
+>>>>>>> Stashed changes
                 );
               },
             );
