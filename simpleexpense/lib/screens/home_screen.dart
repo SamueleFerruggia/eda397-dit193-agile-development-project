@@ -27,7 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AppTheme.darkGray,
+        backgroundColor: AppTheme.primary,
         title: const Text(
           'Simple Expense',
           style: TextStyle(
@@ -102,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: AppTheme.lightGray,
+                      color: AppTheme.background,
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -112,7 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                      color: AppTheme.darkGray,
+                      color: AppTheme.textDark,
                     ),
                   ),
                 ],
@@ -133,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       width: 80,
                       height: 80,
                       decoration: BoxDecoration(
-                        color: AppTheme.darkGray,
+                        color: AppTheme.primary,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
@@ -149,7 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                      color: AppTheme.darkGray,
+                      color: AppTheme.textDark,
                     ),
                   ),
                 ],
@@ -177,7 +177,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: AppTheme.lightGray,
+                      color: AppTheme.background,
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -191,7 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
-                            color: AppTheme.darkGray,
+                            color: AppTheme.textDark,
                           ),
                         ),
                       ),
@@ -201,7 +201,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          color: AppTheme.darkGray,
+                          color: AppTheme.textDark,
                         ),
                       ),
                     ],
@@ -225,7 +225,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: AppTheme.lightGray,
+                    color: AppTheme.background,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: DropdownButton<String>(
@@ -245,7 +245,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: AppTheme.darkGray,
+                  color: AppTheme.primary,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: IconButton(

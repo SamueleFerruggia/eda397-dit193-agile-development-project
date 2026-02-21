@@ -50,17 +50,17 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
 
         if (!isGroupLoaded) {
           return Scaffold(
-            backgroundColor: AppTheme.darkGray,
+            backgroundColor: AppTheme.primary,
             body: SafeArea(
               child: Center(
-                child: CircularProgressIndicator(color: AppTheme.white),
+                child: CircularProgressIndicator(color: AppTheme.textLight),
               ),
             ),
           );
         }
 
         return Scaffold(
-          backgroundColor: AppTheme.darkGray,
+          backgroundColor: AppTheme.primary,
           body: SafeArea(
             child: Column(
               children: [
@@ -71,7 +71,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                 Expanded(
                   child: Container(
                     width: double.infinity,
-                    color: AppTheme.white,
+                    color: AppTheme.textLight,
                     child: _buildExpensesView(context, groupsProvider),
                   ),
                 ),
@@ -90,14 +90,14 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
       padding: const EdgeInsets.all(16),
       child: TextField(
         controller: _searchController,
-        style: const TextStyle(color: AppTheme.darkGray),
+        style: const TextStyle(color: AppTheme.primary),
         decoration: InputDecoration(
           hintText: 'Search expenses...',
-          hintStyle: TextStyle(color: AppTheme.middleGray),
-          prefixIcon: const Icon(Icons.search, color: AppTheme.darkGray),
+          hintStyle: TextStyle(color: AppTheme.secondaryDark),
+          prefixIcon: const Icon(Icons.search, color: AppTheme.primary),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-                  icon: const Icon(Icons.clear, color: AppTheme.middleGray),
+                  icon: const Icon(Icons.clear, color: AppTheme.secondaryDark),
                   onPressed: () {
                     setState(() {
                       _searchController.clear();
@@ -107,18 +107,18 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                 )
               : null,
           filled: true,
-          fillColor: AppTheme.lightGray,
+          fillColor: AppTheme.background,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppTheme.middleGray.withOpacity(0.3)),
+            borderSide: BorderSide(color: AppTheme.secondaryDark.withOpacity(0.3)),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppTheme.middleGray.withOpacity(0.3)),
+            borderSide: BorderSide(color: AppTheme.secondaryDark.withOpacity(0.3)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppTheme.darkGray, width: 2),
+            borderSide: BorderSide(color: AppTheme.primary, width: 2),
           ),
           contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         ),
@@ -146,7 +146,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: AppTheme.darkGray),
+            child: CircularProgressIndicator(color: AppTheme.primary),
           );
         }
 
@@ -159,12 +159,12 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                 const SizedBox(height: 16),
                 Text(
                   'Error loading expenses',
-                  style: TextStyle(color: AppTheme.darkGray, fontSize: 16),
+                  style: TextStyle(color: AppTheme.primary, fontSize: 16),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   snapshot.error.toString(),
-                  style: TextStyle(color: AppTheme.middleGray, fontSize: 12),
+                  style: TextStyle(color: AppTheme.secondaryDark, fontSize: 12),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -273,13 +273,13 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
           _filterType = label;
         });
       },
-      backgroundColor: AppTheme.lightGray,
-      selectedColor: AppTheme.darkGray,
+      backgroundColor: AppTheme.background,
+      selectedColor: AppTheme.primary,
       labelStyle: TextStyle(
-        color: isSelected ? AppTheme.white : AppTheme.darkGray,
+        color: isSelected ? AppTheme.textLight : AppTheme.primary,
         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
       ),
-      checkmarkColor: AppTheme.white,
+      checkmarkColor: AppTheme.textLight,
     );
   }
 
@@ -299,7 +299,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppTheme.lightGray,
+        color: AppTheme.background,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -321,21 +321,21 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
   Widget _buildStatItem(String label, String value, IconData icon) {
     return Column(
       children: [
-        Icon(icon, size: 20, color: AppTheme.middleGray),
+        Icon(icon, size: 20, color: AppTheme.secondaryDark),
         const SizedBox(height: 4),
         Text(
           value,
           style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.bold,
-            color: AppTheme.darkGray,
+            color: AppTheme.primary,
           ),
         ),
         Text(
           label,
           style: const TextStyle(
             fontSize: 11,
-            color: AppTheme.middleGray,
+            color: AppTheme.secondaryDark,
           ),
         ),
       ],
@@ -378,10 +378,10 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AppTheme.darkGray,
+                color: AppTheme.primary,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.add, color: AppTheme.white, size: 40),
+              child: const Icon(Icons.add, color: AppTheme.textLight, size: 40),
             ),
           ),
           const SizedBox(height: 24),
@@ -390,7 +390,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: AppTheme.darkGray,
+              color: AppTheme.primary,
             ),
           ),
           const SizedBox(height: 8),
@@ -398,7 +398,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
             'Tap the + button to add your first expense',
             style: TextStyle(
               fontSize: 14,
-              color: AppTheme.middleGray,
+              color: AppTheme.secondaryDark,
             ),
           ),
         ],
@@ -412,14 +412,14 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.search_off, size: 64, color: AppTheme.middleGray),
+          Icon(Icons.search_off, size: 64, color: AppTheme.secondaryDark),
           const SizedBox(height: 16),
           const Text(
             'No expenses found',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: AppTheme.darkGray,
+              color: AppTheme.primary,
             ),
           ),
           const SizedBox(height: 8),
@@ -427,7 +427,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
             'Try adjusting your search or filters',
             style: TextStyle(
               fontSize: 14,
-              color: AppTheme.middleGray,
+              color: AppTheme.secondaryDark,
             ),
           ),
         ],
@@ -519,7 +519,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.darkGray,
+                        color: AppTheme.primary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -530,14 +530,14 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                         Icon(
                           Icons.person,
                           size: 14,
-                          color: AppTheme.middleGray,
+                          color: AppTheme.secondaryDark,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           'Paid by $payerName',
                           style: const TextStyle(
                             fontSize: 12,
-                            color: AppTheme.middleGray,
+                            color: AppTheme.secondaryDark,
                           ),
                         ),
                       ],
@@ -548,14 +548,14 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                         Icon(
                           Icons.calendar_today,
                           size: 12,
-                          color: AppTheme.middleGray,
+                          color: AppTheme.secondaryDark,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           '$formattedDate at $formattedTime',
                           style: const TextStyle(
                             fontSize: 11,
-                            color: AppTheme.middleGray,
+                            color: AppTheme.secondaryDark,
                           ),
                         ),
                       ],
@@ -579,7 +579,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                     currency,
                     style: const TextStyle(
                       fontSize: 12,
-                      color: AppTheme.middleGray,
+                      color: AppTheme.secondaryDark,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -589,14 +589,14 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: AppTheme.lightGray,
+                      color: AppTheme.background,
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
                       'Split ${expense.splitWith.length}',
                       style: const TextStyle(
                         fontSize: 10,
-                        color: AppTheme.middleGray,
+                        color: AppTheme.secondaryDark,
                       ),
                     ),
                   ),
@@ -633,14 +633,14 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
-                color: AppTheme.lightGray,
+                color: AppTheme.background,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: DropdownButton<String>(
                 value: _sortType,
                 isExpanded: true,
                 underline: const SizedBox.shrink(),
-                icon: const Icon(Icons.sort, color: AppTheme.darkGray),
+                icon: const Icon(Icons.sort, color: AppTheme.primary),
                 items: const [
                   DropdownMenuItem(
                     value: 'Date (Newest)',
@@ -676,7 +676,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                 },
                 style: const TextStyle(
                   fontSize: 14,
-                  color: AppTheme.darkGray,
+                  color: AppTheme.primary,
                 ),
               ),
             ),
@@ -686,11 +686,11 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: AppTheme.darkGray,
+              color: AppTheme.primary,
               borderRadius: BorderRadius.circular(8),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.darkGray.withOpacity(0.3),
+                  color: AppTheme.primary.withOpacity(0.3),
                   offset: const Offset(0, 2),
                   blurRadius: 4,
                 ),

@@ -92,7 +92,7 @@ class _JoinGroupScreenState extends State<JoinGroupScreen> {
             letterSpacing: 0.5,
           ),
         ),
-        backgroundColor: AppTheme.lightGray,
+        backgroundColor: AppTheme.background,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
@@ -173,7 +173,7 @@ class _JoinGroupScreenState extends State<JoinGroupScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.darkGray,
+                    backgroundColor: AppTheme.primary,
                   ),
                   onPressed: _isLoading ? null : _joinGroup,
                   child: _isLoading

@@ -109,16 +109,16 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
         : widget.amount / _selectedMemberIds.length;
 
     return Scaffold(
-      backgroundColor: AppTheme.lightGray,
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text(
           'Add expense',
-          style: TextStyle(color: AppTheme.darkGray),
+          style: TextStyle(color: AppTheme.textDark),
         ),
-        backgroundColor: AppTheme.lightGray,
+        backgroundColor: AppTheme.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.darkGray),
+          icon: const Icon(Icons.arrow_back, color: AppTheme.primary),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -126,7 +126,7 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
         children: [
           Expanded(
             child: Container(
-              color: AppTheme.white,
+              color: AppTheme.textLight,
               padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
@@ -169,7 +169,7 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                                         displayName,
                                         style: const TextStyle(
                                           fontWeight: FontWeight.w500,
-                                          color: AppTheme.darkGray
+                                          color: AppTheme.primary
                                         ),
                                       ),
                                       Text(
@@ -183,7 +183,7 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                                     ],
                                   ),
                                   value: isSelected,
-                                  activeColor: AppTheme.darkGray,
+                                  activeColor: AppTheme.primary,
                                   onChanged: (val) {
                                     setState(() {
                                       if (val == true) {
@@ -219,13 +219,13 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
 
           Container(
             padding: const EdgeInsets.all(24),
-            color: AppTheme.white,
+            color: AppTheme.textLight,
             child: SizedBox(
               height: 52,
               child: ElevatedButton(
                 onPressed: _isSaving ? null : _handleSave,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.darkGray,
+                  backgroundColor: AppTheme.primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),

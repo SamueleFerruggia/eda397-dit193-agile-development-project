@@ -40,17 +40,17 @@ class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
 
         if (!isGroupLoaded) {
           return Scaffold(
-            backgroundColor: AppTheme.darkGray,
+            backgroundColor: AppTheme.primary,
             body: SafeArea(
               child: Center(
-                child: CircularProgressIndicator(color: AppTheme.white),
+                child: CircularProgressIndicator(color: AppTheme.textLight),
               ),
             ),
           );
         }
 
         return Scaffold(
-          backgroundColor: AppTheme.darkGray,
+          backgroundColor: AppTheme.primary,
           body: SafeArea(
             child: Column(
               children: [
@@ -60,7 +60,7 @@ class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
                 Expanded(
                   child: Container(
                     width: double.infinity,
-                    decoration: const BoxDecoration(color: AppTheme.white),
+                    decoration: const BoxDecoration(color: AppTheme.textLight),
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -128,7 +128,7 @@ class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
                               style: TextStyle(fontSize: 18),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.darkGray,
+                              backgroundColor: AppTheme.primary,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 32,
@@ -183,15 +183,15 @@ class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
                 child: Container(
                   width: 70,
                   height: 70,
-                  decoration: BoxDecoration(color: AppTheme.darkGray),
-                  child: const Icon(Icons.add, color: AppTheme.white, size: 60),
+                  decoration: BoxDecoration(color: AppTheme.primary),
+                  child: const Icon(Icons.add, color: AppTheme.textLight, size: 60),
                 ),
               ),
               const SizedBox(height: 16),
               Text(
                 ' Add Expense',
                 style: TextStyle(
-                  color: AppTheme.darkGray,
+                  color: AppTheme.textDark,
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
                 ),
@@ -251,7 +251,7 @@ class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: AppTheme.lightGray,
+                color: AppTheme.background,
                 borderRadius: BorderRadius.circular(4),
               ),
               child: DropdownButton<String>(
@@ -263,14 +263,14 @@ class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
                     value: 'Description',
                     child: Text(
                       'Sort by Description',
-                      style: TextStyle(fontSize: 14, color: AppTheme.darkGray),
+                      style: TextStyle(fontSize: 14, color: AppTheme.textDark),
                     ),
                   ),
                   DropdownMenuItem(
                     value: 'People',
                     child: Text(
                       'Sort by People',
-                      style: TextStyle(fontSize: 14, color: AppTheme.darkGray),
+                      style: TextStyle(fontSize: 14, color: AppTheme.textDark),
                     ),
                   ),
                 ],
@@ -289,7 +289,7 @@ class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppTheme.darkGray,
+              color: AppTheme.primary,
               borderRadius: BorderRadius.circular(4),
             ),
             child: IconButton(
@@ -347,10 +347,10 @@ class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: AppTheme.lightGray,
+                color: AppTheme.background,
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: const Icon(Icons.receipt, color: AppTheme.middleGray),
+              child: const Icon(Icons.receipt, color: AppTheme.secondaryDark),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -363,7 +363,7 @@ class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: AppTheme.darkGray,
+                      color: AppTheme.textDark,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -372,7 +372,7 @@ class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.darkGray,
+                      color: AppTheme.textDark,
                     ),
                   ),
                 ],

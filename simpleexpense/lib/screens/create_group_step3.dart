@@ -91,7 +91,7 @@ class _CreateGroupStep3State extends State<CreateGroupStep3> {
             letterSpacing: 0.5,
           ),
         ),
-        backgroundColor: AppTheme.lightGray,
+        backgroundColor: AppTheme.background,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
@@ -119,7 +119,7 @@ class _CreateGroupStep3State extends State<CreateGroupStep3> {
                       width: 200,
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                        border: Border.all(color: AppTheme.middleGray),
+                        border: Border.all(color: AppTheme.secondaryDark),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: DropdownButton<String>(
@@ -156,7 +156,7 @@ class _CreateGroupStep3State extends State<CreateGroupStep3> {
               height: 52,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.darkGray,
+                  backgroundColor: AppTheme.primary,
                 ),
                 // Disable the button during saving
                 onPressed: _isCreating ? null : _handleCreateGroup,
