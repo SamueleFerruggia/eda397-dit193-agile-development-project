@@ -119,6 +119,57 @@ class FirestoreService {
     });
   }
 
+  /// Delete a group and all its associated data
+  /// Only the admin can delete a group
+  Future<void> deleteGroup({
+    required String groupId,
+    required String userId,
+  }) async {
+    try {
+      // Get the group document
+      final groupDoc = await _db.collection('groups').doc(groupId).get();
+      
+      if (!groupDoc.exists) {
+        throw Exception('Group not found');
+      }
+      
+      final groupData = groupDoc.data() as Map<String, dynamic>;
+      final adminId = groupData['adminId'] as String?;
+      
+      // Check if the user is the admin
+      if (adminId != userId) {
+        throw Exception('Only the group admin can delete the group');
+      }
+      
+      // Delete all expenses in the group
+      final expensesSnapshot = await _db
+          .collection('groups')
+          .doc(groupId)
+          .collection('expenses')
+          .get();
+      
+      for (var doc in expensesSnapshot.docs) {
+        await doc.reference.delete();
+      }
+      
+      // Delete all invitations for this group
+      final invitationsSnapshot = await _db
+          .collection('invitations')
+          .where('groupId', isEqualTo: groupId)
+          .get();
+      
+      for (var doc in invitationsSnapshot.docs) {
+        await doc.reference.delete();
+      }
+      
+      // Finally, delete the group document
+      await _db.collection('groups').doc(groupId).delete();
+      
+    } catch (e) {
+      throw Exception('Failed to delete group: $e');
+    }
+  }
+
   String _generateInviteCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     Random rnd = Random();
