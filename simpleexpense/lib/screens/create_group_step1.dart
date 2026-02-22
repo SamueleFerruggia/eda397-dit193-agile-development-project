@@ -85,6 +85,10 @@ class _CreateGroupStep1State extends State<CreateGroupStep1> {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(26),
+                    ),
+                    elevation: 0,
                   ),
                   child: const Text('Next', style: TextStyle(fontSize: 16)),
                   onPressed: () {

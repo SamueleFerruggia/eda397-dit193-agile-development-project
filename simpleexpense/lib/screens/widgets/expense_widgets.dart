@@ -8,6 +8,8 @@ import 'package:simpleexpense/services/balance_service.dart';
 import 'package:simpleexpense/services/firestore_service.dart';
 import 'package:simpleexpense/theme/app_theme.dart';
 import 'package:simpleexpense/models/models.dart';
+import 'package:simpleexpense/screens/invitation_management_screen.dart';
+import 'share_invite_dialog.dart';
 
 /// Custom header widget for expense screens
 class ExpenseHeaderWidget extends StatelessWidget {
@@ -17,9 +19,14 @@ class ExpenseHeaderWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Consumer<GroupsProvider>(
-        builder: (context, groupsProvider, child) {
+      child: Consumer2<GroupsProvider, AuthProvider>(
+        builder: (context, groupsProvider, authProvider, child) {
           final inviteCode = groupsProvider.currentInviteCode ?? '------';
+          final groupName = groupsProvider.currentGroupName ?? 'Group';
+          final selectedGroup = groupsProvider.selectedGroup;
+          final currentUserId = authProvider.currentUserId;
+          final isAdmin = selectedGroup?.adminId == currentUserId;
+
           return Row(
             children: [
               IconButton(
@@ -27,12 +34,35 @@ class ExpenseHeaderWidget extends StatelessWidget {
                 onPressed: () => Navigator.of(context).pop(),
               ),
               const Spacer(),
+              // Manage Invitations button (admin only)
+              if (isAdmin)
+                IconButton(
+                  icon: const Icon(
+                    Icons.people_outline,
+                    color: AppTheme.textLight,
+                    size: 24,
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            const InvitationManagementScreen(),
+                      ),
+                    );
+                  },
+                  tooltip: 'Manage Invitations',
+                ),
+              const SizedBox(width: 8),
+              // Share invite code
               GestureDetector(
                 onTap: () {
                   if (inviteCode != '------') {
-                    Share.share(
-                      'Join my group in Simple Expense!\n\nInvite Code: $inviteCode',
-                      subject: 'Join my Simple Expense group',
+                    showDialog(
+                      context: context,
+                      builder: (context) => ShareInviteDialog(
+                        groupName: groupName,
+                        inviteCode: inviteCode,
+                      ),
                     );
                   }
                 },
@@ -137,8 +167,10 @@ class GroupInfoWidget extends StatelessWidget {
                 }
 
                 final members = memberSnapshot.data!;
-                final balances =
-                    balanceService.calculateNetBalances(expenses, members);
+                final balances = balanceService.calculateNetBalances(
+                  expenses,
+                  members,
+                );
                 final myBalance = balances[currentUserId] ?? 0.0;
 
                 final isPositive = myBalance > 0.01;
@@ -207,6 +239,7 @@ class GroupInfoWidget extends StatelessWidget {
                 Text(
                   statusText,
                   style: TextStyle(
+                    fontFamily: AppTheme.fontFamilyDisplay,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: statusColor,
@@ -225,11 +258,13 @@ class GroupInfoWidget extends StatelessWidget {
 class GroupBalanceStatusWidget extends StatelessWidget {
   final String groupId;
   final String currency;
+  final String? groupName;
 
   const GroupBalanceStatusWidget({
     super.key,
     required this.groupId,
     required this.currency,
+    this.groupName,
   });
 
   @override
@@ -242,13 +277,18 @@ class GroupBalanceStatusWidget extends StatelessWidget {
         final currentUserId = authProvider.currentUserId;
 
         if (currentUserId == null) {
-          return Text(
-            '—',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w400,
-              color: AppTheme.textDark,
-            ),
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '—',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: AppTheme.textDark,
+                ),
+              ),
+            ],
           );
         }
 
@@ -260,13 +300,18 @@ class GroupBalanceStatusWidget extends StatelessWidget {
               .snapshots(),
           builder: (context, expenseSnapshot) {
             if (!expenseSnapshot.hasData) {
-              return Text(
-                '—',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w400,
-                  color: AppTheme.textDark,
-                ),
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '—',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: AppTheme.textDark,
+                    ),
+                  ),
+                ],
               );
             }
 
@@ -278,47 +323,74 @@ class GroupBalanceStatusWidget extends StatelessWidget {
               future: firestoreService.getGroupMembers(groupId),
               builder: (context, memberSnapshot) {
                 if (!memberSnapshot.hasData) {
-                  return Text(
-                    '—',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w400,
-                      color: AppTheme.textDark,
-                    ),
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '—',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: AppTheme.textDark,
+                        ),
+                      ),
+                    ],
                   );
                 }
 
                 final members = memberSnapshot.data!;
-                final balances =
-                    balanceService.calculateNetBalances(expenses, members);
+                final balances = balanceService.calculateNetBalances(
+                  expenses,
+                  members,
+                );
                 final myBalance = balances[currentUserId] ?? 0.0;
 
                 final isPositive = myBalance > 0.01;
                 final isNegative = myBalance < -0.01;
 
                 String statusText;
+                String amountText;
                 Color statusColor;
 
+                final displayGroupName = groupName ?? 'Group';
+
                 if (isPositive) {
-                  statusText =
-                      'You are owed ${myBalance.toStringAsFixed(2)} $currency';
+                  statusText = '$displayGroupName owes you';
+                  amountText = '${myBalance.toStringAsFixed(0)} $currency';
                   statusColor = AppTheme.secondaryDark;
                 } else if (isNegative) {
-                  statusText =
-                      'You owe ${(-myBalance).toStringAsFixed(2)} $currency';
+                  statusText = 'You owe $displayGroupName';
+                  amountText = '${(-myBalance).toStringAsFixed(0)} $currency';
                   statusColor = AppTheme.primaryDark;
                 } else {
                   statusText = 'Settled up';
+                  amountText = '';
                   statusColor = AppTheme.textDark;
                 }
 
-                return Text(
-                  statusText,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: statusColor,
-                  ),
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      statusText,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: AppTheme.textDark,
+                      ),
+                    ),
+                    if (amountText.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        amountText,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: statusColor,
+                        ),
+                      ),
+                    ],
+                  ],
                 );
               },
             );

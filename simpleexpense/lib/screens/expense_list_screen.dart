@@ -13,8 +13,13 @@ import '../models/models.dart';
 /// Displays all expenses for a group with sorting, filtering, and search capabilities
 class ExpenseListScreen extends StatefulWidget {
   final String groupId;
+  final bool embedInParent;
 
-  const ExpenseListScreen({super.key, required this.groupId});
+  const ExpenseListScreen({
+    super.key,
+    required this.groupId,
+    this.embedInParent = false,
+  });
 
   @override
   State<ExpenseListScreen> createState() => _ExpenseListScreenState();
@@ -46,7 +51,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
       builder: (context, groupsProvider, child) {
         final isGroupLoaded =
             groupsProvider.currentGroupId == widget.groupId &&
-                groupsProvider.selectedGroup != null;
+            groupsProvider.selectedGroup != null;
 
         if (!isGroupLoaded) {
           return Scaffold(
@@ -59,6 +64,23 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
           );
         }
 
+        final content = Column(
+          children: [
+            _buildSearchBar(),
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                color: AppTheme.background,
+                child: _buildExpensesView(context, groupsProvider),
+              ),
+            ),
+          ],
+        );
+
+        if (widget.embedInParent) {
+          return content;
+        }
+
         return Scaffold(
           backgroundColor: AppTheme.primary,
           body: SafeArea(
@@ -66,15 +88,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
               children: [
                 const ExpenseHeaderWidget(),
                 const GroupInfoWidget(),
-                _buildSearchBar(),
-                // Main content area
-                Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    color: AppTheme.textLight,
-                    child: _buildExpensesView(context, groupsProvider),
-                  ),
-                ),
+                Expanded(child: content),
               ],
             ),
           ),
@@ -86,7 +100,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
   /// Search bar widget
   Widget _buildSearchBar() {
     return Container(
-      color: Colors.white,
+      color: AppTheme.background,
       padding: const EdgeInsets.all(16),
       child: TextField(
         controller: _searchController,
@@ -110,17 +124,24 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
           fillColor: AppTheme.background,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppTheme.secondaryDark.withOpacity(0.3)),
+            borderSide: BorderSide(
+              color: AppTheme.secondaryDark.withOpacity(0.3),
+            ),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppTheme.secondaryDark.withOpacity(0.3)),
+            borderSide: BorderSide(
+              color: AppTheme.secondaryDark.withOpacity(0.3),
+            ),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: AppTheme.primary, width: 2),
           ),
-          contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 16,
+            horizontal: 16,
+          ),
         ),
         onChanged: (value) {
           setState(() {
@@ -224,8 +245,11 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                       itemCount: expensesList.length,
                       itemBuilder: (context, index) {
                         final expense = expensesList[index];
-                        final currency = groupsProvider.currentCurrency ?? 'SEK';
-                        final currentUserId = context.read<AuthProvider>().currentUserId;
+                        final currency =
+                            groupsProvider.currentCurrency ?? 'SEK';
+                        final currentUserId = context
+                            .read<AuthProvider>()
+                            .currentUserId;
 
                         return _buildExpenseItem(
                           context,
@@ -291,7 +315,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
   ) {
     final currency = groupsProvider.currentCurrency ?? 'SEK';
     final currentUserId = context.read<AuthProvider>().currentUserId;
-    
+
     final myExpenses = expenses.where((e) => e.payerId == currentUserId).length;
     final othersExpenses = expenses.length - myExpenses;
 
@@ -333,10 +357,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
         ),
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 11,
-            color: AppTheme.secondaryDark,
-          ),
+          style: const TextStyle(fontSize: 11, color: AppTheme.secondaryDark),
         ),
       ],
     );
@@ -396,10 +417,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
           const SizedBox(height: 8),
           const Text(
             'Tap the + button to add your first expense',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppTheme.secondaryDark,
-            ),
+            style: TextStyle(fontSize: 14, color: AppTheme.secondaryDark),
           ),
         ],
       ),
@@ -425,10 +443,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
           const SizedBox(height: 8),
           const Text(
             'Try adjusting your search or filters',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppTheme.secondaryDark,
-            ),
+            style: TextStyle(fontSize: 14, color: AppTheme.secondaryDark),
           ),
         ],
       ),
@@ -444,11 +459,13 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
     GroupsProvider groupsProvider,
   ) {
     final isPaidByMe = expense.payerId == currentUserId;
-    
+
     // Format date without intl package
     final date = expense.timestamp;
-    final formattedDate = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-    final formattedTime = '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    final formattedDate =
+        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final formattedTime =
+        '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
 
     // Determine if paid by current user
     final payerName = isPaidByMe ? 'You' : 'Member';
@@ -469,7 +486,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.background,
           border: Border(
             left: BorderSide(
               color: isPaidByMe ? Colors.green : Colors.blue,
@@ -616,55 +633,98 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
     GroupsProvider groupsProvider,
   ) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            offset: const Offset(0, -2),
-            blurRadius: 4,
-          ),
-        ],
-      ),
+      color: AppTheme.background,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       child: Row(
         children: [
           Expanded(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: AppTheme.background,
-                borderRadius: BorderRadius.circular(8),
+                color: AppTheme.primary,
+                borderRadius: BorderRadius.circular(24),
               ),
               child: DropdownButton<String>(
                 value: _sortType,
                 isExpanded: true,
                 underline: const SizedBox.shrink(),
-                icon: const Icon(Icons.sort, color: AppTheme.primary),
+                dropdownColor: AppTheme.primary,
+                style: const TextStyle(
+                  fontFamily: AppTheme.fontFamilyDisplay,
+                  color: AppTheme.textLight,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                ),
+                icon: const Icon(
+                  Icons.arrow_drop_down,
+                  color: AppTheme.textLight,
+                ),
                 items: const [
                   DropdownMenuItem(
                     value: 'Date (Newest)',
-                    child: Text('Date (Newest)'),
+                    child: Text(
+                      'Date (Newest)',
+                      style: TextStyle(
+                        fontFamily: AppTheme.fontFamilyDisplay,
+                        color: AppTheme.textLight,
+                        fontSize: 18,
+                      ),
+                    ),
                   ),
                   DropdownMenuItem(
                     value: 'Date (Oldest)',
-                    child: Text('Date (Oldest)'),
+                    child: Text(
+                      'Date (Oldest)',
+                      style: TextStyle(
+                        fontFamily: AppTheme.fontFamilyDisplay,
+                        color: AppTheme.textLight,
+                        fontSize: 18,
+                      ),
+                    ),
                   ),
                   DropdownMenuItem(
                     value: 'Amount (High to Low)',
-                    child: Text('Amount (High to Low)'),
+                    child: Text(
+                      'Amount (High to Low)',
+                      style: TextStyle(
+                        fontFamily: AppTheme.fontFamilyDisplay,
+                        color: AppTheme.textLight,
+                        fontSize: 18,
+                      ),
+                    ),
                   ),
                   DropdownMenuItem(
                     value: 'Amount (Low to High)',
-                    child: Text('Amount (Low to High)'),
+                    child: Text(
+                      'Amount (Low to High)',
+                      style: TextStyle(
+                        fontFamily: AppTheme.fontFamilyDisplay,
+                        color: AppTheme.textLight,
+                        fontSize: 18,
+                      ),
+                    ),
                   ),
                   DropdownMenuItem(
                     value: 'Description (A-Z)',
-                    child: Text('Description (A-Z)'),
+                    child: Text(
+                      'Description (A-Z)',
+                      style: TextStyle(
+                        fontFamily: AppTheme.fontFamilyDisplay,
+                        color: AppTheme.textLight,
+                        fontSize: 18,
+                      ),
+                    ),
                   ),
                   DropdownMenuItem(
                     value: 'Description (Z-A)',
-                    child: Text('Description (Z-A)'),
+                    child: Text(
+                      'Description (Z-A)',
+                      style: TextStyle(
+                        fontFamily: AppTheme.fontFamilyDisplay,
+                        color: AppTheme.textLight,
+                        fontSize: 18,
+                      ),
+                    ),
                   ),
                 ],
                 onChanged: (value) {
@@ -674,31 +734,35 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                     });
                   }
                 },
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: AppTheme.primary,
-                ),
               ),
             ),
           ),
           const SizedBox(width: 12),
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: AppTheme.primary,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.primary.withOpacity(0.3),
-                  offset: const Offset(0, 2),
-                  blurRadius: 4,
-                ),
-              ],
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.add, color: Colors.white, size: 28),
-              onPressed: () => _navigateToAddExpense(context),
+          GestureDetector(
+            onTap: () => _navigateToAddExpense(context),
+            child: Container(
+              width: 68,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(
+                color: AppTheme.primary,
+                borderRadius: BorderRadius.circular(34),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.add, color: AppTheme.textLight, size: 28),
+                  const SizedBox(height: 2),
+                  const Text(
+                    'Expense',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.textLight,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -707,8 +771,8 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
   }
 
   void _navigateToAddExpense(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const AddExpenseScreen()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const AddExpenseScreen()));
   }
 }
