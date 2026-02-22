@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 
 // --- USER MODEL ---
 class AppUser {
@@ -223,4 +224,149 @@ class Expense {
 
   @override
   int get hashCode => id.hashCode;
+}
+
+// --- GROUP INVITATION MODEL ---
+class GroupInvitation {
+  final String id;
+  final String groupId;
+  final String groupName;
+  final String invitedBy;
+  final String invitedByName;
+  final String? invitedEmail;
+  final String inviteCode;
+  final InvitationStatus status;
+  final DateTime createdAt;
+  final DateTime? expiresAt;
+  final DateTime? respondedAt;
+
+  GroupInvitation({
+    required this.id,
+    required this.groupId,
+    required this.groupName,
+    required this.invitedBy,
+    required this.invitedByName,
+    this.invitedEmail,
+    required this.inviteCode,
+    required this.status,
+    required this.createdAt,
+    this.expiresAt,
+    this.respondedAt,
+  });
+
+  factory GroupInvitation.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return GroupInvitation(
+      id: doc.id,
+      groupId: data['groupId'] ?? '',
+      groupName: data['groupName'] ?? '',
+      invitedBy: data['invitedBy'] ?? '',
+      invitedByName: data['invitedByName'] ?? '',
+      invitedEmail: data['invitedEmail'],
+      inviteCode: data['inviteCode'] ?? '',
+      status: InvitationStatus.fromString(data['status'] ?? 'pending'),
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      expiresAt: (data['expiresAt'] as Timestamp?)?.toDate(),
+      respondedAt: (data['respondedAt'] as Timestamp?)?.toDate(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'groupId': groupId,
+      'groupName': groupName,
+      'invitedBy': invitedBy,
+      'invitedByName': invitedByName,
+      'invitedEmail': invitedEmail,
+      'inviteCode': inviteCode,
+      'status': status.value,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'expiresAt': expiresAt != null ? Timestamp.fromDate(expiresAt!) : null,
+      'respondedAt': respondedAt != null ? Timestamp.fromDate(respondedAt!) : null,
+    };
+  }
+
+  bool get isExpired {
+    if (expiresAt == null) return false;
+    return DateTime.now().isAfter(expiresAt!);
+  }
+
+  bool get isPending => status == InvitationStatus.pending && !isExpired;
+
+  GroupInvitation copyWith({
+    String? id,
+    String? groupId,
+    String? groupName,
+    String? invitedBy,
+    String? invitedByName,
+    String? invitedEmail,
+    String? inviteCode,
+    InvitationStatus? status,
+    DateTime? createdAt,
+    DateTime? expiresAt,
+    DateTime? respondedAt,
+  }) {
+    return GroupInvitation(
+      id: id ?? this.id,
+      groupId: groupId ?? this.groupId,
+      groupName: groupName ?? this.groupName,
+      invitedBy: invitedBy ?? this.invitedBy,
+      invitedByName: invitedByName ?? this.invitedByName,
+      invitedEmail: invitedEmail ?? this.invitedEmail,
+      inviteCode: inviteCode ?? this.inviteCode,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      expiresAt: expiresAt ?? this.expiresAt,
+      respondedAt: respondedAt ?? this.respondedAt,
+    );
+  }
+}
+
+// --- INVITATION STATUS ENUM ---
+enum InvitationStatus {
+  pending('pending'),
+  accepted('accepted'),
+  declined('declined'),
+  expired('expired'),
+  revoked('revoked');
+
+  final String value;
+  const InvitationStatus(this.value);
+
+  static InvitationStatus fromString(String value) {
+    return InvitationStatus.values.firstWhere(
+      (status) => status.value == value,
+      orElse: () => InvitationStatus.pending,
+    );
+  }
+
+  String get displayName {
+    switch (this) {
+      case InvitationStatus.pending:
+        return 'Pending';
+      case InvitationStatus.accepted:
+        return 'Accepted';
+      case InvitationStatus.declined:
+        return 'Declined';
+      case InvitationStatus.expired:
+        return 'Expired';
+      case InvitationStatus.revoked:
+        return 'Revoked';
+    }
+  }
+
+  Color get color {
+    switch (this) {
+      case InvitationStatus.pending:
+        return Colors.orange;
+      case InvitationStatus.accepted:
+        return Colors.green;
+      case InvitationStatus.declined:
+        return Colors.red;
+      case InvitationStatus.expired:
+        return Colors.grey;
+      case InvitationStatus.revoked:
+        return Colors.grey;
+    }
+  }
 }
