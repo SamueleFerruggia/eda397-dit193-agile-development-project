@@ -457,10 +457,26 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, groupsProvider, _) {
         final groups = groupsProvider.groups;
         return Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(0),
-            itemCount: groups.length,
-            itemBuilder: (context, index) {
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Text(
+                  'All Groups',
+                  style: TextStyle(
+                    fontFamily: AppTheme.fontFamilyDisplay,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(0),
+                  itemCount: groups.length,
+                  itemBuilder: (context, index) {
               final group = groups[index];
               // UPDATED: Using Model properties instead of Map keys
               final name = group.name;
@@ -653,6 +669,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               );
             },
+          ),
+              ),
+            ],
           ),
         );
       },
