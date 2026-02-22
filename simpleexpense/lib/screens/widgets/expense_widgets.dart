@@ -8,6 +8,8 @@ import 'package:simpleexpense/services/balance_service.dart';
 import 'package:simpleexpense/services/firestore_service.dart';
 import 'package:simpleexpense/theme/app_theme.dart';
 import 'package:simpleexpense/models/models.dart';
+import 'package:simpleexpense/screens/invitation_management_screen.dart';
+import 'share_invite_dialog.dart';
 
 /// Custom header widget for expense screens
 class ExpenseHeaderWidget extends StatelessWidget {
@@ -17,9 +19,14 @@ class ExpenseHeaderWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Consumer<GroupsProvider>(
-        builder: (context, groupsProvider, child) {
+      child: Consumer2<GroupsProvider, AuthProvider>(
+        builder: (context, groupsProvider, authProvider, child) {
           final inviteCode = groupsProvider.currentInviteCode ?? '------';
+          final groupName = groupsProvider.currentGroupName ?? 'Group';
+          final selectedGroup = groupsProvider.selectedGroup;
+          final currentUserId = authProvider.currentUserId;
+          final isAdmin = selectedGroup?.adminId == currentUserId;
+
           return Row(
             children: [
               IconButton(
@@ -27,12 +34,34 @@ class ExpenseHeaderWidget extends StatelessWidget {
                 onPressed: () => Navigator.of(context).pop(),
               ),
               const Spacer(),
+              // Manage Invitations button (admin only)
+              if (isAdmin)
+                IconButton(
+                  icon: const Icon(
+                    Icons.people_outline,
+                    color: AppTheme.textLight,
+                    size: 24,
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const InvitationManagementScreen(),
+                      ),
+                    );
+                  },
+                  tooltip: 'Manage Invitations',
+                ),
+              const SizedBox(width: 8),
+              // Share invite code
               GestureDetector(
                 onTap: () {
                   if (inviteCode != '------') {
-                    Share.share(
-                      'Join my group in Simple Expense!\n\nInvite Code: $inviteCode',
-                      subject: 'Join my Simple Expense group',
+                    showDialog(
+                      context: context,
+                      builder: (context) => ShareInviteDialog(
+                        groupName: groupName,
+                        inviteCode: inviteCode,
+                      ),
                     );
                   }
                 },
