@@ -176,12 +176,17 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
       appBar: AppBar(
         title: const Text(
           'Add expense',
-          style: TextStyle(color: AppTheme.textDark),
+          style: TextStyle(
+            color: AppTheme.textLight,
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.5,
+          ),
         ),
-        backgroundColor: AppTheme.background,
+        backgroundColor: AppTheme.primary,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.primary),
+          icon: const Icon(Icons.arrow_back, color: AppTheme.textLight),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -189,7 +194,7 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
         children: [
           Expanded(
             child: Container(
-              color: AppTheme.textLight,
+              color: AppTheme.background,
               padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -212,21 +217,24 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                   // Equal split button
                   SizedBox(
                     height: 40,
+                    width: double.infinity,
                     child: ElevatedButton(
                       onPressed: _splitEqually,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            _useEqualSplit ? AppTheme.darkGray : Colors.grey[300],
+                        backgroundColor: _useEqualSplit
+                            ? AppTheme.primary
+                            : AppTheme.secondaryDark.withOpacity(0.2),
+                        foregroundColor: _useEqualSplit
+                            ? AppTheme.textLight
+                            : AppTheme.textDark,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(20),
                         ),
+                        elevation: 0,
                       ),
-                      child: Text(
+                      child: const Text(
                         'Split Equally',
-                        style: TextStyle(
-                          color: _useEqualSplit ? Colors.white : Colors.black,
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(fontSize: 14),
                       ),
                     ),
                   ),
@@ -258,11 +266,12 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                                       margin: const EdgeInsets.only(bottom: 12),
                                       padding: const EdgeInsets.all(12),
                                       decoration: BoxDecoration(
+                                        color: AppTheme.background,
                                         border: Border.all(
-                                          color: Colors.grey.shade200,
+                                          color: AppTheme.secondaryDark.withOpacity(0.3),
                                         ),
                                         borderRadius:
-                                            BorderRadius.circular(4),
+                                            BorderRadius.circular(8),
                                       ),
                                       child: Column(
                                         crossAxisAlignment:
@@ -270,9 +279,9 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                                         children: [
                                           Text(
                                             displayName,
-                                            style: TextStyle(
+                                            style: const TextStyle(
                                               fontWeight: FontWeight.w500,
-                                              color: AppTheme.darkGray,
+                                              color: AppTheme.textDark,
                                             ),
                                           ),
                                           const SizedBox(height: 8),
@@ -284,18 +293,20 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                                             ),
                                             decoration: InputDecoration(
                                               hintText: '0.00',
+                                              filled: true,
+                                              fillColor: AppTheme.background,
                                               suffix: Text(
                                                 ' $currency',
-                                                style: const TextStyle(
-                                                  color: Colors.grey,
+                                                style: TextStyle(
+                                                  color: AppTheme.secondaryDark,
                                                   fontSize: 12,
                                                 ),
                                               ),
                                               border: OutlineInputBorder(
                                                 borderRadius:
-                                                    BorderRadius.circular(4),
-                                                borderSide: const BorderSide(
-                                                  color: Colors.grey,
+                                                    BorderRadius.circular(8),
+                                                borderSide: BorderSide(
+                                                  color: AppTheme.secondaryDark.withOpacity(0.3),
                                                 ),
                                               ),
                                               contentPadding:
@@ -317,14 +328,14 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
                                     color: isValid
-                                        ? Colors.green[50]
-                                        : Colors.red[50],
+                                        ? AppTheme.secondaryLight
+                                        : AppTheme.error.withOpacity(0.15),
                                     border: Border.all(
                                       color: isValid
-                                          ? Colors.green[300]!
-                                          : Colors.red[300]!,
+                                          ? AppTheme.secondary
+                                          : AppTheme.error.withOpacity(0.5),
                                     ),
-                                    borderRadius: BorderRadius.circular(4),
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Row(
                                     mainAxisAlignment:
@@ -334,6 +345,7 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                                         'Total',
                                         style: TextStyle(
                                           fontWeight: FontWeight.w500,
+                                          color: AppTheme.textDark,
                                         ),
                                       ),
                                       Text(
@@ -341,8 +353,8 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           color: isValid
-                                              ? Colors.green[700]
-                                              : Colors.red[700],
+                                              ? AppTheme.secondaryDark
+                                              : AppTheme.error,
                                         ),
                                       ),
                                     ],
@@ -357,23 +369,26 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
             ),
           ),
           Container(
-            padding: const EdgeInsets.all(24),
-            color: AppTheme.textLight,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            color: AppTheme.background,
             child: SizedBox(
               height: 52,
+              width: double.infinity,
               child: ElevatedButton(
                 onPressed: _isSaving || !isValid ? null : _handleSave,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primary,
+                  foregroundColor: AppTheme.textLight,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(26),
                   ),
+                  elevation: 0,
                 ),
                 child: _isSaving
-                    ? const CircularProgressIndicator(color: Colors.white)
+                    ? const CircularProgressIndicator(color: AppTheme.textLight)
                     : const Text(
                         'Save',
-                        style: TextStyle(fontSize: 16, color: Colors.white),
+                        style: TextStyle(fontSize: 16),
                       ),
               ),
             ),

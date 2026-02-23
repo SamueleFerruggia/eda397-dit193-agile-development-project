@@ -332,7 +332,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
-                    vertical: 12,
+                    vertical: 8,
                   ),
                   decoration: BoxDecoration(
                     color: AppTheme.primary,
@@ -346,7 +346,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: const TextStyle(
                       fontFamily: AppTheme.fontFamilyDisplay,
                       color: AppTheme.textLight,
-                      fontSize: 18,
+                      fontSize: 16,
                       fontWeight: FontWeight.w500,
                     ),
                     icon: const Icon(
@@ -361,7 +361,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           style: TextStyle(
                             fontFamily: AppTheme.fontFamilyDisplay,
                             color: AppTheme.textLight,
-                            fontSize: 18,
+                            fontSize: 16,
                           ),
                         ),
                       ),
@@ -372,7 +372,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           style: TextStyle(
                             fontFamily: AppTheme.fontFamilyDisplay,
                             color: AppTheme.textLight,
-                            fontSize: 18,
+                            fontSize: 16,
                           ),
                         ),
                       ),
@@ -421,22 +421,22 @@ class _HomeScreenState extends State<HomeScreen> {
                   ).push(MaterialPageRoute(builder: (_) => CreateGroupStep1()));
                 },
                 child: Container(
-                  width: 68,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  width: 56,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   decoration: BoxDecoration(
                     color: AppTheme.primary,
-                    borderRadius: BorderRadius.circular(34),
+                    borderRadius: BorderRadius.circular(28),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.add, color: Colors.white, size: 28),
+                      const Icon(Icons.add, color: Colors.white, size: 24),
                       const SizedBox(height: 2),
                       const Text(
                         'Group',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: FontWeight.w500,
                           color: AppTheme.textLight,
                         ),
