@@ -26,6 +26,8 @@ class AppTheme {
   /// Secondary color
   static const Color secondaryColor = secondary;
 
+  static Color? get darkGray => null;
+
   /// Light theme data
   static ThemeData lightTheme() {
     return ThemeData(

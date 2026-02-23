@@ -114,6 +114,7 @@ class Expense {
   final String payerId;
   final String payerName;
   final List<String> splitWith;
+  final Map<String, double> splitAmounts;
   final String category;
   final String? notes;
   final String? receiptUrl;
@@ -128,6 +129,7 @@ class Expense {
     required this.payerId,
     required this.payerName,
     required this.splitWith,
+    required this.splitAmounts,
     this.category = 'Other',
     this.notes,
     this.receiptUrl,
@@ -165,6 +167,7 @@ class Expense {
       payerId: data['payerId'] ?? '',
       payerName: data['payerName'] ?? '',
       splitWith: List<String>.from(data['splitWith'] ?? []),
+      splitAmounts: splitAmounts,
       category: data['category'] ?? 'Other',
       notes: data['notes'],
       receiptUrl: data['receiptUrl'],
@@ -181,6 +184,7 @@ class Expense {
       'payerId': payerId,
       'payerName': payerName,
       'splitWith': splitWith,
+      'splitAmounts': splitAmounts,
       'category': category,
       'notes': notes,
       'receiptUrl': receiptUrl,
@@ -209,6 +213,7 @@ class Expense {
     String? payerId,
     String? payerName,
     List<String>? splitWith,
+    Map<String, double>? splitAmounts,
     String? category,
     String? notes,
     String? receiptUrl,
@@ -223,6 +228,7 @@ class Expense {
       payerId: payerId ?? this.payerId,
       payerName: payerName ?? this.payerName,
       splitWith: splitWith ?? this.splitWith,
+      splitAmounts: splitAmounts ?? this.splitAmounts,
       category: category ?? this.category,
       notes: notes ?? this.notes,
       receiptUrl: receiptUrl ?? this.receiptUrl,

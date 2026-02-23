@@ -160,7 +160,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                               displayName,
                                               style: TextStyle(
                                                 fontSize: 14,
-                                                color: AppTheme.textDark,
+                                                color: Color(0xFF333333),
                                               ),
                                             ),
                                             Text(
