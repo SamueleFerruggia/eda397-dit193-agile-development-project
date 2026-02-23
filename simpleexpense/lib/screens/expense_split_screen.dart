@@ -26,8 +26,8 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
   bool _isSaving = false;
   bool _isLoadingMembers = true;
   List<GroupMember> _members = [];
-  Map<String, double> _splitAmounts = {}; // userId -> amount
-  Map<String, TextEditingController> _controllers = {}; // userId -> controller
+  final Map<String, double> _splitAmounts = {}; // userId -> amount
+  final Map<String, TextEditingController> _controllers = {}; // userId -> controller
   bool _useEqualSplit = true;
 
   @override
@@ -204,7 +204,7 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.darkGray,
+                      color: Color(0xFF333333),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -270,7 +270,7 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                                         children: [
                                           Text(
                                             displayName,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontWeight: FontWeight.w500,
                                               color: AppTheme.darkGray,
                                             ),

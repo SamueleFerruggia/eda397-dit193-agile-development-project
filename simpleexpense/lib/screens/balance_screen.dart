@@ -199,7 +199,6 @@ class _BalanceScreenState extends State<BalanceScreen> {
   ) {
     final isPositive = balance > 0.01;
     final isNegative = balance < -0.01;
-    final isSettled = !isPositive && !isNegative;
 
     Color cardColor = Colors.grey.shade100;
     Color textColor = AppTheme.textDark;
@@ -453,7 +452,6 @@ class _BalanceScreenState extends State<BalanceScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              // TODO: Implement settlement recording
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
