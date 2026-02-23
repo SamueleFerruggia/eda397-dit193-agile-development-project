@@ -1,7 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:simpleexpense/providers/groups_provider.dart';
+import 'package:simpleexpense/services/firestore_service.dart';
 import 'package:simpleexpense/theme/app_theme.dart';
+import '../models/models.dart';
 import 'expense_split_screen.dart';
 
 class AddExpenseScreen extends StatefulWidget {
@@ -16,7 +19,49 @@ class AddExpenseScreen extends StatefulWidget {
 class _AddExpenseScreenState extends State<AddExpenseScreen> {
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
-  String _paidBy = 'Me';
+  final FirestoreService _firestoreService = FirestoreService();
+  bool _isLoadingMembers = true;
+  List<GroupMember> _members = [];
+  String? _paidById;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMembers();
+  }
+
+  Future<void> _loadMembers() async {
+    final groupId = context.read<GroupsProvider>().currentGroupId;
+    if (groupId == null) {
+      if (mounted) setState(() => _isLoadingMembers = false);
+      return;
+    }
+
+    try {
+      final members = await _firestoreService.getGroupMembers(groupId);
+      final currentUser = FirebaseAuth.instance.currentUser;
+      String? defaultPayerId = currentUser?.uid;
+
+      if (defaultPayerId == null && members.isNotEmpty) {
+        defaultPayerId = members.first.uid;
+      }
+
+      if (mounted) {
+        setState(() {
+          _members = members;
+          _paidById = defaultPayerId;
+          _isLoadingMembers = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingMembers = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading members: $e')),
+        );
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -44,14 +89,20 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       return;
     }
 
+    if (_paidById == null || _paidById!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select who paid')),
+      );
+      return;
+    }
+
     // Navigate to the ExpenseSplitScreen, passing the entered data
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => ExpenseSplitScreen(
           description: description,
           amount: amount,
-          payerId:
-              _paidBy, // We will resolve 'Me' to actual UID in the split screen
+          payerId: _paidById!,
         ),
       ),
     );
@@ -60,6 +111,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   @override
   Widget build(BuildContext context) {
     final currency = context.watch<GroupsProvider>().currentCurrency ?? 'SEK';
+    final currentUser = FirebaseAuth.instance.currentUser;
 
     final body = Column(
         children: [
@@ -123,15 +175,27 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       border: Border.all(color: Colors.grey.shade300),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: DropdownButton<String>(
-                      value: _paidBy,
-                      isExpanded: true,
-                      underline: const SizedBox.shrink(),
-                      items: const [
-                        DropdownMenuItem(value: 'Me', child: Text('Me')),
-                      ],
-                      onChanged: (val) => setState(() => _paidBy = val!),
-                    ),
+                    child: _isLoadingMembers
+                        ? const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            child: LinearProgressIndicator(),
+                          )
+                        : DropdownButton<String>(
+                            value: _paidById,
+                            isExpanded: true,
+                            underline: const SizedBox.shrink(),
+                            items: _members.map((member) {
+                              final isMe = member.uid == currentUser?.uid;
+                              final label =
+                                  isMe ? 'Me (${member.name})' : member.name;
+                              return DropdownMenuItem(
+                                value: member.uid,
+                                child: Text(label),
+                              );
+                            }).toList(),
+                            onChanged: (val) =>
+                                setState(() => _paidById = val),
+                          ),
                   ),
                 ],
               ),

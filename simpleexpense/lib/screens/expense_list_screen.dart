@@ -478,7 +478,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
               description: expense.description,
               amount: expense.amount,
               payerId: expense.payerId,
-              splitWith: expense.splitWith,
+              splitAmounts: expense.splitAmounts,
             ),
           ),
         );
@@ -610,7 +610,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      'Split ${expense.splitWith.length}',
+                      'Split ${expense.splitAmounts.length}',
                       style: const TextStyle(
                         fontSize: 10,
                         color: AppTheme.secondaryDark,

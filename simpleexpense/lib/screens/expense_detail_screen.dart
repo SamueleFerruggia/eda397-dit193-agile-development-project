@@ -9,14 +9,14 @@ class ExpenseDetailScreen extends StatefulWidget {
   final String description;
   final double amount;
   final String payerId;
-  final List<String> splitWith; // List of members involved in the split
+  final Map<String, double> splitAmounts; // Map of userId -> amount
 
   const ExpenseDetailScreen({
     super.key,
     required this.description,
     required this.amount,
     required this.payerId,
-    required this.splitWith,
+    required this.splitAmounts,
   });
 
   @override
@@ -24,27 +24,12 @@ class ExpenseDetailScreen extends StatefulWidget {
 }
 
 class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
-  Set<String> _selectedMemberIds = {};
-
-  @override
-  void initState() {
-    super.initState();
-    // Initialize selection based on the saved split data
-    _selectedMemberIds = widget.splitWith.toSet();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Consumer<GroupsProvider>(
       builder: (context, groupsProvider, _) {
-        // Get all group members to display the full list
-        final members = groupsProvider.selectedGroup?.memberIds ?? [];
         final currency = groupsProvider.currentCurrency ?? 'SEK';
         final currentUser = FirebaseAuth.instance.currentUser;
-
-        final splitAmount = _selectedMemberIds.isEmpty
-            ? 0.0
-            : widget.amount / _selectedMemberIds.length;
 
         return Scaffold(
           backgroundColor: AppTheme.primary,
@@ -101,7 +86,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                   ),
                                 ),
                                 Text(
-                                  '${widget.amount.toStringAsFixed(0)} $currency',
+                                  '${widget.amount.toStringAsFixed(2)} $currency',
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -118,9 +103,9 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 32),
                             child: Text(
-                              'Total amount: ${widget.amount.toStringAsFixed(0)} $currency\n'
+                              'Total amount: ${widget.amount.toStringAsFixed(2)} $currency\n'
                               'Paid by: ${widget.payerId == currentUser?.uid ? 'Me' : 'Someone else'}\n'
-                              'Split: equally',
+                              'Split: Custom amounts',
                               style: const TextStyle(
                                 fontSize: 14,
                                 color: AppTheme.textDark,
@@ -141,13 +126,13 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                 ListView.builder(
                                   shrinkWrap: true,
                                   physics: const NeverScrollableScrollPhysics(),
-                                  itemCount: members.length,
+                                  itemCount: widget.splitAmounts.length,
                                   itemBuilder: (context, index) {
-                                    final memberId = members[index];
-                                    final isMe = memberId == currentUser?.uid;
-                                    // Placeholder for name until we implement Member fetching in this screen
-                                    final displayName = isMe ? 'Me' : 'User...${memberId.substring(0, 4)}';
-                                    final isSelected = _selectedMemberIds.contains(memberId);
+                                    final entries = widget.splitAmounts.entries.toList();
+                                    final userId = entries[index].key;
+                                    final amount = entries[index].value;
+                                    final isMe = userId == currentUser?.uid;
+                                    final displayName = isMe ? 'Me' : 'User...${userId.substring(0, 4)}';
 
                                     return Padding(
                                       padding: const EdgeInsets.only(bottom: 12),
@@ -161,25 +146,17 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                           borderRadius: BorderRadius.circular(4),
                                         ),
                                         child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Checkbox(
-                                              value: isSelected,
-                                              activeColor: AppTheme.primary,
-                                              onChanged: null, // Read-only view
-                                            ),
-                                            Expanded(
-                                              child: Text(
-                                                displayName,
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  color: AppTheme.textDark,
-                                                ),
+                                            Text(
+                                              displayName,
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                color: AppTheme.darkGray,
                                               ),
                                             ),
                                             Text(
-                                              isSelected
-                                                  ? '${splitAmount.toStringAsFixed(0)} ${currency.substring(0, min(2, currency.length))}' 
-                                                  : '0 $currency',
+                                              '${amount.toStringAsFixed(2)} $currency',
                                               style: const TextStyle(
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.bold,
@@ -206,29 +183,8 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                 SizedBox(
                                   width: double.infinity,
                                   height: 44,
-                                  child: OutlinedButton(
-                                    onPressed: () {},
-                                    style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(color: Colors.grey),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                    ),
-                                    child: const Text(
-                                      'Add People',
-                                      style: TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 44,
                                   child: ElevatedButton(
-                                    onPressed: () {},
+                                    onPressed: () => Navigator.of(context).pop(),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: AppTheme.primary,
                                       shape: RoundedRectangleBorder(
@@ -236,7 +192,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                       ),
                                     ),
                                     child: const Text(
-                                      'Save changes',
+                                      'Back',
                                       style: TextStyle(
                                         fontSize: 14,
                                         color: Colors.white,
@@ -261,7 +217,4 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
       },
     );
   }
-  
-  // Helper for safe substring
-  int min(int a, int b) => a < b ? a : b;
 }

@@ -137,6 +137,26 @@ class Expense {
 
   factory Expense.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    
+    // Handle both old format (splitWith as list) and new format (splitAmounts as map)
+    Map<String, double> splitAmounts = {};
+    if (data['splitAmounts'] != null) {
+      // New format
+      final rawSplitAmounts = data['splitAmounts'] as Map<String, dynamic>;
+      splitAmounts = rawSplitAmounts.map((key, value) => 
+        MapEntry(key, (value as num?)?.toDouble() ?? 0.0)
+      );
+    } else if (data['splitWith'] != null) {
+      // Legacy format - convert to equal split
+      final splitWith = List<String>.from(data['splitWith'] ?? []);
+      final splitAmount = splitWith.isEmpty
+          ? 0.0
+          : ((data['amount'] as num?)?.toDouble() ?? 0.0) / splitWith.length;
+      for (final uid in splitWith) {
+        splitAmounts[uid] = splitAmount;
+      }
+    }
+    
     return Expense(
       id: doc.id,
       groupId: data['groupId'] ?? '',
