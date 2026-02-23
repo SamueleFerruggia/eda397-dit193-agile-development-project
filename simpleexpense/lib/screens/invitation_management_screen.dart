@@ -17,7 +17,6 @@ class InvitationManagementScreen extends StatefulWidget {
 
 class _InvitationManagementScreenState
     extends State<InvitationManagementScreen> {
-
   void _showShareDialog() {
     final groupsProvider = context.read<GroupsProvider>();
     final groupName = groupsProvider.currentGroupName;
@@ -35,10 +34,8 @@ class _InvitationManagementScreenState
 
     showDialog(
       context: context,
-      builder: (context) => ShareInviteDialog(
-        groupName: groupName,
-        inviteCode: inviteCode,
-      ),
+      builder: (context) =>
+          ShareInviteDialog(groupName: groupName, inviteCode: inviteCode),
     );
   }
 
@@ -100,16 +97,13 @@ class _InvitationManagementScreenState
               Navigator.of(context).pop();
               _showShareDialog();
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primary,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
             child: const Text('Share Now'),
           ),
         ],
       ),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -245,16 +239,16 @@ class _InvitationManagementScreenState
           // Group Members List
           Expanded(
             child: FutureBuilder<List<GroupMember>>(
-              future: FirestoreService().getGroupMembers(groupsProvider.currentGroupId ?? ''),
+              future: FirestoreService().getGroupMembers(
+                groupsProvider.currentGroupId ?? '',
+              ),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
                 if (snapshot.hasError) {
-                  return Center(
-                    child: Text('Error: ${snapshot.error}'),
-                  );
+                  return Center(child: Text('Error: ${snapshot.error}'));
                 }
 
                 final members = snapshot.data ?? [];
@@ -300,12 +294,10 @@ class _InvitationManagementScreenState
 
   Widget _buildMemberCard(GroupMember member) {
     final isAdmin = member.role == 'admin';
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
@@ -360,19 +352,12 @@ class _InvitationManagementScreenState
                   const SizedBox(height: 4),
                   Text(
                     member.email,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
                 ],
               ),
             ),
-            Icon(
-              Icons.check_circle,
-              color: Colors.green,
-              size: 20,
-            ),
+            Icon(Icons.check_circle, color: Colors.green, size: 20),
           ],
         ),
       ),

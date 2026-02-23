@@ -139,7 +139,7 @@ class FirestoreService {
     int? expiryDays,
   }) async {
     final invitationRef = _db.collection('invitations').doc();
-    
+
     final expiresAt = expiryDays != null
         ? DateTime.now().add(Duration(days: expiryDays))
         : null;
@@ -187,17 +187,19 @@ class FirestoreService {
           final invitations = snapshot.docs
               .map((doc) => GroupInvitation.fromFirestore(doc))
               .toList();
-          
+
           // Sort in memory instead of using Firestore orderBy
           // This avoids the need for a composite index
           invitations.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-          
+
           return invitations;
         });
   }
 
   /// Get pending invitations for a specific email
-  Future<List<GroupInvitation>> getPendingInvitationsForEmail(String email) async {
+  Future<List<GroupInvitation>> getPendingInvitationsForEmail(
+    String email,
+  ) async {
     try {
       final snapshot = await _db
           .collection('invitations')
@@ -220,14 +222,17 @@ class FirestoreService {
     required String invitationId,
     required String userId,
   }) async {
-    final invitationDoc = await _db.collection('invitations').doc(invitationId).get();
-    
+    final invitationDoc = await _db
+        .collection('invitations')
+        .doc(invitationId)
+        .get();
+
     if (!invitationDoc.exists) {
       throw Exception('Invitation not found');
     }
 
     final invitation = GroupInvitation.fromFirestore(invitationDoc);
-    
+
     if (invitation.status != InvitationStatus.pending) {
       throw Exception('Invitation is no longer valid');
     }
@@ -282,7 +287,7 @@ class FirestoreService {
       if (snapshot.docs.isEmpty) return null;
 
       final invitation = GroupInvitation.fromFirestore(snapshot.docs.first);
-      
+
       if (invitation.isExpired) {
         // Mark as expired
         await _db.collection('invitations').doc(invitation.id).update({
@@ -324,13 +329,13 @@ class FirestoreService {
     required String description,
     required double amount,
     required String payerId,
-    required List<String> splitWith, // Updated to include split details
+    required Map<String, double> splitAmounts, // Map of userId -> amount
   }) async {
     await _db.collection('groups').doc(groupId).collection('expenses').add({
       'description': description,
       'amount': amount,
       'payerId': payerId,
-      'splitWith': splitWith,
+      'splitAmounts': splitAmounts,
       'timestamp': FieldValue.serverTimestamp(),
     });
   }
@@ -341,7 +346,7 @@ class FirestoreService {
     required String description,
     required double amount,
     required String payerId,
-    required List<String> splitWith,
+    required Map<String, double> splitAmounts,
   }) async {
     await _db
         .collection('groups')
@@ -352,7 +357,7 @@ class FirestoreService {
           'description': description,
           'amount': amount,
           'payerId': payerId,
-          'splitWith': splitWith,
+          'splitAmounts': splitAmounts,
           'updatedAt': FieldValue.serverTimestamp(),
         });
   }
