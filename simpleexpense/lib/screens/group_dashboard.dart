@@ -1,13 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:simpleexpense/providers/groups_provider.dart';
-import 'package:simpleexpense/screens/add_expense_screen.dart';
-import 'package:simpleexpense/screens/expense_detail_screen.dart';
 import 'package:simpleexpense/screens/expense_list_screen.dart';
+import 'package:simpleexpense/screens/balance_screen.dart';
 import 'package:simpleexpense/theme/app_theme.dart';
 import 'package:simpleexpense/screens/widgets/expense_widgets.dart';
-import '../models/models.dart'; // Import models
 
 class GroupDashboardScreen extends StatefulWidget {
   final String groupId;
@@ -19,7 +16,7 @@ class GroupDashboardScreen extends StatefulWidget {
 }
 
 class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
-  String _sortType = 'Description';
+  int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -39,326 +36,87 @@ class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
 
         if (!isGroupLoaded) {
           return Scaffold(
-            backgroundColor: AppTheme.darkGray,
+            backgroundColor: AppTheme.primary,
             body: SafeArea(
               child: Center(
-                child: CircularProgressIndicator(color: AppTheme.white),
+                child: CircularProgressIndicator(color: AppTheme.textLight),
               ),
             ),
           );
         }
 
         return Scaffold(
-          backgroundColor: AppTheme.darkGray,
+          backgroundColor: AppTheme.primary,
           body: SafeArea(
             child: Column(
               children: [
                 const ExpenseHeaderWidget(),
                 const GroupInfoWidget(),
-                // Main content area - Show buttons instead of expense list
                 Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    decoration: const BoxDecoration(color: AppTheme.white),
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          // My Expenses Button
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => ExpenseListScreen(groupId: widget.groupId),
-                                ),
-                              );
-                            },
-                            icon: const Icon(Icons.list_alt, size: 32),
-                            label: const Text(
-                              'My Expenses',
-                              style: TextStyle(fontSize: 18),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 32,
-                                vertical: 16,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          // Add Expense Button
-                          ElevatedButton.icon(
-                            onPressed: () => _navigateToAddExpense(context),
-                            icon: const Icon(Icons.add, size: 32),
-                            label: const Text(
-                              'Add Expense',
-                              style: TextStyle(fontSize: 18),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.darkGray,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 32,
-                                vertical: 16,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                        ],
+                  child: IndexedStack(
+                    index: _selectedIndex,
+                    children: [
+                      ExpenseListScreen(
+                        groupId: widget.groupId,
+                        embedInParent: true,
                       ),
-                    ),
+                      BalanceScreen(
+                        groupId: widget.groupId,
+                        embedInParent: true,
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
+          bottomNavigationBar: Container(
+            color: AppTheme.textLight,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildNavItem(0, Icons.list_alt, 'Expenses'),
+                    _buildNavItem(1, Icons.account_balance_wallet, 'Balances'),
+                  ],
+                ),
+              ),
+            ),
+          ),
         );
       },
     );
   }
 
-  Widget _buildExpensesView(
-    BuildContext context,
-    GroupsProvider groupsProvider,
-  ) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('groups')
-          .doc(groupsProvider.currentGroupId)
-          .collection('expenses')
-          .orderBy('timestamp', descending: true)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        // Convert Firestore documents to Expense objects
-        final expensesList = snapshot.data!.docs
-            .map((doc) => Expense.fromFirestore(doc))
-            .toList();
-
-        if (expensesList.isEmpty) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              GestureDetector(
-                onTap: () => _navigateToAddExpense(context),
-                child: Container(
-                  width: 70,
-                  height: 70,
-                  decoration: BoxDecoration(color: AppTheme.darkGray),
-                  child: const Icon(Icons.add, color: AppTheme.white, size: 60),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                ' Add Expense',
-                style: TextStyle(
-                  color: AppTheme.darkGray,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ],
-          );
-        }
-
-        // Calculate total balance using the Expense model
-        final totalBalance = expensesList.fold(
-          0.0,
-          (sum, expense) => sum + expense.amount,
-        );
-
-        return Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 16,
-                ),
-                itemCount: expensesList.length,
-                itemBuilder: (context, index) {
-                  final expense = expensesList[index];
-                  final currency = groupsProvider.currentCurrency ?? 'SEK';
-
-                  return _buildExpenseItem(
-                    context,
-                    expense.description,
-                    '${expense.amount.toStringAsFixed(2)} $currency',
-                    expense.amount,
-                    expense.payerId,
-                    expense.splitAmounts, // Pass split amounts
-                  );
-                },
-              ),
-            ),
-            _buildBottomBar(context, totalBalance, groupsProvider),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildBottomBar(
-    BuildContext context,
-    double totalBalance,
-    GroupsProvider groupsProvider,
-  ) {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppTheme.lightGray,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: DropdownButton<String>(
-                value: _sortType,
-                isExpanded: true,
-                underline: const SizedBox.shrink(),
-                items: [
-                  DropdownMenuItem(
-                    value: 'Description',
-                    child: Text(
-                      'Sort by Description',
-                      style: TextStyle(fontSize: 14, color: AppTheme.darkGray),
-                    ),
-                  ),
-                  DropdownMenuItem(
-                    value: 'People',
-                    child: Text(
-                      'Sort by People',
-                      style: TextStyle(fontSize: 14, color: AppTheme.darkGray),
-                    ),
-                  ),
-                ],
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() {
-                      _sortType = value;
-                    });
-                  }
-                },
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppTheme.darkGray,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.add, color: Colors.white),
-              onPressed: () => _navigateToAddExpense(context),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildExpenseItem(
-    BuildContext context,
-    String title,
-    String amountString,
-    double rawAmount,
-    String payerId,
-    Map<String, double> splitAmounts, // Added parameter
-  ) {
+  Widget _buildNavItem(int index, IconData icon, String label) {
+    final isSelected = _selectedIndex == index;
     return GestureDetector(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => ExpenseDetailScreen(
-              description: title,
-              amount: rawAmount,
-              payerId: payerId,
-              splitAmounts: splitAmounts, // Pass to details
-            ),
-          ),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border(left: BorderSide(color: Colors.grey[400]!, width: 8)),
-          borderRadius: const BorderRadius.only(
-            topRight: Radius.circular(4),
-            bottomRight: Radius.circular(4),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              offset: const Offset(0, 2),
-              blurRadius: 4,
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.all(12),
-        child: Row(
+      onTap: () => setState(() => _selectedIndex = index),
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: AppTheme.lightGray,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: const Icon(Icons.receipt, color: AppTheme.middleGray),
+            Icon(
+              icon,
+              size: 24,
+              color: isSelected ? AppTheme.primary : AppTheme.secondaryDark,
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: AppTheme.darkGray,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    amountString,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.darkGray,
-                    ),
-                  ),
-                ],
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected ? AppTheme.primary : AppTheme.secondaryDark,
               ),
             ),
           ],
         ),
       ),
     );
-  }
-
-  void _navigateToAddExpense(BuildContext context) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const AddExpenseScreen()));
   }
 }

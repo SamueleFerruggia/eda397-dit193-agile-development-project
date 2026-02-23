@@ -127,6 +127,197 @@ class FirestoreService {
     );
   }
 
+  // --- INVITATIONS ---
+
+  /// Create a new invitation for a group
+  Future<String> createInvitation({
+    required String groupId,
+    required String groupName,
+    required String invitedBy,
+    required String invitedByName,
+    required String inviteCode,
+    String? invitedEmail,
+    int? expiryDays,
+  }) async {
+    final invitationRef = _db.collection('invitations').doc();
+    
+    final expiresAt = expiryDays != null
+        ? DateTime.now().add(Duration(days: expiryDays))
+        : null;
+
+    await invitationRef.set({
+      'groupId': groupId,
+      'groupName': groupName,
+      'invitedBy': invitedBy,
+      'invitedByName': invitedByName,
+      'invitedEmail': invitedEmail,
+      'inviteCode': inviteCode,
+      'status': 'pending',
+      'createdAt': FieldValue.serverTimestamp(),
+      'expiresAt': expiresAt != null ? Timestamp.fromDate(expiresAt) : null,
+    });
+
+    return invitationRef.id;
+  }
+
+  /// Get all invitations for a specific group
+  Future<List<GroupInvitation>> getGroupInvitations(String groupId) async {
+    try {
+      final snapshot = await _db
+          .collection('invitations')
+          .where('groupId', isEqualTo: groupId)
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => GroupInvitation.fromFirestore(doc))
+          .toList();
+    } catch (e) {
+      print('Error fetching group invitations: $e');
+      return [];
+    }
+  }
+
+  /// Stream invitations for a specific group
+  Stream<List<GroupInvitation>> streamGroupInvitations(String groupId) {
+    return _db
+        .collection('invitations')
+        .where('groupId', isEqualTo: groupId)
+        .snapshots()
+        .map((snapshot) {
+          final invitations = snapshot.docs
+              .map((doc) => GroupInvitation.fromFirestore(doc))
+              .toList();
+          
+          // Sort in memory instead of using Firestore orderBy
+          // This avoids the need for a composite index
+          invitations.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          
+          return invitations;
+        });
+  }
+
+  /// Get pending invitations for a specific email
+  Future<List<GroupInvitation>> getPendingInvitationsForEmail(String email) async {
+    try {
+      final snapshot = await _db
+          .collection('invitations')
+          .where('invitedEmail', isEqualTo: email.toLowerCase())
+          .where('status', isEqualTo: 'pending')
+          .get();
+
+      return snapshot.docs
+          .map((doc) => GroupInvitation.fromFirestore(doc))
+          .where((inv) => !inv.isExpired)
+          .toList();
+    } catch (e) {
+      print('Error fetching pending invitations: $e');
+      return [];
+    }
+  }
+
+  /// Accept an invitation
+  Future<void> acceptInvitation({
+    required String invitationId,
+    required String userId,
+  }) async {
+    final invitationDoc = await _db.collection('invitations').doc(invitationId).get();
+    
+    if (!invitationDoc.exists) {
+      throw Exception('Invitation not found');
+    }
+
+    final invitation = GroupInvitation.fromFirestore(invitationDoc);
+    
+    if (invitation.status != InvitationStatus.pending) {
+      throw Exception('Invitation is no longer valid');
+    }
+
+    if (invitation.isExpired) {
+      throw Exception('Invitation has expired');
+    }
+
+    // Add user to group
+    await _db.collection('groups').doc(invitation.groupId).update({
+      'members': FieldValue.arrayUnion([userId]),
+    });
+
+    // Update invitation status
+    await _db.collection('invitations').doc(invitationId).update({
+      'status': 'accepted',
+      'respondedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Decline an invitation
+  Future<void> declineInvitation(String invitationId) async {
+    await _db.collection('invitations').doc(invitationId).update({
+      'status': 'declined',
+      'respondedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Revoke an invitation (admin only)
+  Future<void> revokeInvitation(String invitationId) async {
+    await _db.collection('invitations').doc(invitationId).update({
+      'status': 'revoked',
+      'respondedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Delete an invitation
+  Future<void> deleteInvitation(String invitationId) async {
+    await _db.collection('invitations').doc(invitationId).delete();
+  }
+
+  /// Get invitation by invite code
+  Future<GroupInvitation?> getInvitationByCode(String inviteCode) async {
+    try {
+      final snapshot = await _db
+          .collection('invitations')
+          .where('inviteCode', isEqualTo: inviteCode.toUpperCase())
+          .where('status', isEqualTo: 'pending')
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isEmpty) return null;
+
+      final invitation = GroupInvitation.fromFirestore(snapshot.docs.first);
+      
+      if (invitation.isExpired) {
+        // Mark as expired
+        await _db.collection('invitations').doc(invitation.id).update({
+          'status': 'expired',
+        });
+        return null;
+      }
+
+      return invitation;
+    } catch (e) {
+      print('Error fetching invitation by code: $e');
+      return null;
+    }
+  }
+
+  /// Check if user has pending invitations
+  Future<int> getPendingInvitationCount(String email) async {
+    try {
+      final snapshot = await _db
+          .collection('invitations')
+          .where('invitedEmail', isEqualTo: email.toLowerCase())
+          .where('status', isEqualTo: 'pending')
+          .get();
+
+      return snapshot.docs
+          .map((doc) => GroupInvitation.fromFirestore(doc))
+          .where((inv) => !inv.isExpired)
+          .length;
+    } catch (e) {
+      print('Error counting pending invitations: $e');
+      return 0;
+    }
+  }
+
   // --- EXPENSES ---
 
   Future<void> addExpense({

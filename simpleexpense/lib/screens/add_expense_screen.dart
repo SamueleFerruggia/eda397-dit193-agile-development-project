@@ -8,7 +8,9 @@ import '../models/models.dart';
 import 'expense_split_screen.dart';
 
 class AddExpenseScreen extends StatefulWidget {
-  const AddExpenseScreen({super.key});
+  final bool embedInParent;
+
+  const AddExpenseScreen({super.key, this.embedInParent = false});
 
   @override
   State<AddExpenseScreen> createState() => _AddExpenseScreenState();
@@ -111,31 +113,12 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     final currency = context.watch<GroupsProvider>().currentCurrency ?? 'SEK';
     final currentUser = FirebaseAuth.instance.currentUser;
 
-    return Scaffold(
-      backgroundColor: AppTheme.lightGray,
-      appBar: AppBar(
-        backgroundColor: AppTheme.lightGray,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.darkGray),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text(
-          'Add Expense',
-          style: TextStyle(
-            color: AppTheme.darkGray,
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.5,
-          ),
-        ),
-      ),
-      body: Column(
+    final body = Column(
         children: [
           Expanded(
             child: Container(
               width: double.infinity,
-              color: AppTheme.white,
+              color: AppTheme.textLight,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -145,7 +128,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     decoration: InputDecoration(
                       hintText: 'What is this for?',
                       filled: true,
-                      fillColor: AppTheme.white,
+                      fillColor: AppTheme.textLight,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -163,7 +146,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                           decoration: InputDecoration(
                             hintText: '0.00',
                             filled: true,
-                            fillColor: AppTheme.white,
+                            fillColor: AppTheme.textLight,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -220,13 +203,13 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           ),
           Container(
             padding: const EdgeInsets.all(24),
-            color: AppTheme.white,
+            color: AppTheme.textLight,
             child: SizedBox(
               height: 52,
               child: ElevatedButton(
                 onPressed: _handleNext, // Call Next
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.darkGray,
+                  backgroundColor: AppTheme.primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -239,7 +222,35 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             ),
           ),
         ],
+      );
+
+    if (widget.embedInParent) {
+      return Container(
+        color: AppTheme.textLight,
+        child: body,
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: AppTheme.background,
+      appBar: AppBar(
+        backgroundColor: AppTheme.background,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppTheme.textDark),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text(
+          'Add Expense',
+          style: TextStyle(
+            color: AppTheme.textDark,
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.5,
+          ),
+        ),
       ),
+      body: body,
     );
   }
 }

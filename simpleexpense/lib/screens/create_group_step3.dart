@@ -91,7 +91,7 @@ class _CreateGroupStep3State extends State<CreateGroupStep3> {
             letterSpacing: 0.5,
           ),
         ),
-        backgroundColor: AppTheme.lightGray,
+        backgroundColor: AppTheme.background,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
@@ -114,15 +114,14 @@ class _CreateGroupStep3State extends State<CreateGroupStep3> {
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 24),
-                  Center(
-                    child: Container(
-                      width: 200,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppTheme.middleGray),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: DropdownButton<String>(
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppTheme.secondaryDark),
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: DropdownButton<String>(
                         value: _currency,
                         isExpanded: true,
                         underline: const SizedBox.shrink(),
@@ -139,7 +138,6 @@ class _CreateGroupStep3State extends State<CreateGroupStep3> {
                               },
                       ),
                     ),
-                  ),
                   const SizedBox(height: 8),
                   const Text(
                     'Applies to all expenses',
@@ -151,12 +149,17 @@ class _CreateGroupStep3State extends State<CreateGroupStep3> {
             ),
           ),
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
             child: SizedBox(
               height: 52,
+              width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.darkGray,
+                  backgroundColor: AppTheme.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(26),
+                  ),
+                  elevation: 0,
                 ),
                 // Disable the button during saving
                 onPressed: _isCreating ? null : _handleCreateGroup,

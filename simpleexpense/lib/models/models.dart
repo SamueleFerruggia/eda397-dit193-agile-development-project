@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 
 // --- USER MODEL ---
 class AppUser {
@@ -107,19 +108,31 @@ class GroupMember {
 // --- EXPENSE MODEL ---
 class Expense {
   final String id;
+  final String groupId;
   final String description;
   final double amount;
   final String payerId;
-  final Map<String, double> splitAmounts; // Map of userId -> amount
+  final String payerName;
+  final List<String> splitWith;
+  final String category;
+  final String? notes;
+  final String? receiptUrl;
   final DateTime timestamp;
+  final DateTime? updatedAt;
 
   Expense({
     required this.id,
+    required this.groupId,
     required this.description,
     required this.amount,
     required this.payerId,
-    required this.splitAmounts,
+    required this.payerName,
+    required this.splitWith,
+    this.category = 'Other',
+    this.notes,
+    this.receiptUrl,
     required this.timestamp,
+    this.updatedAt,
   });
 
   factory Expense.fromFirestore(DocumentSnapshot doc) {
@@ -146,21 +159,234 @@ class Expense {
     
     return Expense(
       id: doc.id,
+      groupId: data['groupId'] ?? '',
       description: data['description'] ?? '',
       amount: (data['amount'] as num?)?.toDouble() ?? 0.0,
       payerId: data['payerId'] ?? '',
-      splitAmounts: splitAmounts,
+      payerName: data['payerName'] ?? '',
+      splitWith: List<String>.from(data['splitWith'] ?? []),
+      category: data['category'] ?? 'Other',
+      notes: data['notes'],
+      receiptUrl: data['receiptUrl'],
       timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
+      'groupId': groupId,
       'description': description,
       'amount': amount,
       'payerId': payerId,
-      'splitAmounts': splitAmounts,
+      'payerName': payerName,
+      'splitWith': splitWith,
+      'category': category,
+      'notes': notes,
+      'receiptUrl': receiptUrl,
       'timestamp': Timestamp.fromDate(timestamp),
+      'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
     };
+  }
+
+  // Calculate the amount each person owes (equal split)
+  double get amountPerPerson {
+    if (splitWith.isEmpty) return amount;
+    return amount / splitWith.length;
+  }
+
+  // Check if a specific user is involved in this expense
+  bool involvesUser(String userId) {
+    return payerId == userId || splitWith.contains(userId);
+  }
+
+  // Create a copy with updated fields
+  Expense copyWith({
+    String? id,
+    String? groupId,
+    String? description,
+    double? amount,
+    String? payerId,
+    String? payerName,
+    List<String>? splitWith,
+    String? category,
+    String? notes,
+    String? receiptUrl,
+    DateTime? timestamp,
+    DateTime? updatedAt,
+  }) {
+    return Expense(
+      id: id ?? this.id,
+      groupId: groupId ?? this.groupId,
+      description: description ?? this.description,
+      amount: amount ?? this.amount,
+      payerId: payerId ?? this.payerId,
+      payerName: payerName ?? this.payerName,
+      splitWith: splitWith ?? this.splitWith,
+      category: category ?? this.category,
+      notes: notes ?? this.notes,
+      receiptUrl: receiptUrl ?? this.receiptUrl,
+      timestamp: timestamp ?? this.timestamp,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return 'Expense(id: $id, description: $description, amount: $amount, payerId: $payerId, splitWith: $splitWith)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is Expense && other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
+}
+
+// --- GROUP INVITATION MODEL ---
+class GroupInvitation {
+  final String id;
+  final String groupId;
+  final String groupName;
+  final String invitedBy;
+  final String invitedByName;
+  final String? invitedEmail;
+  final String inviteCode;
+  final InvitationStatus status;
+  final DateTime createdAt;
+  final DateTime? expiresAt;
+  final DateTime? respondedAt;
+
+  GroupInvitation({
+    required this.id,
+    required this.groupId,
+    required this.groupName,
+    required this.invitedBy,
+    required this.invitedByName,
+    this.invitedEmail,
+    required this.inviteCode,
+    required this.status,
+    required this.createdAt,
+    this.expiresAt,
+    this.respondedAt,
+  });
+
+  factory GroupInvitation.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return GroupInvitation(
+      id: doc.id,
+      groupId: data['groupId'] ?? '',
+      groupName: data['groupName'] ?? '',
+      invitedBy: data['invitedBy'] ?? '',
+      invitedByName: data['invitedByName'] ?? '',
+      invitedEmail: data['invitedEmail'],
+      inviteCode: data['inviteCode'] ?? '',
+      status: InvitationStatus.fromString(data['status'] ?? 'pending'),
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      expiresAt: (data['expiresAt'] as Timestamp?)?.toDate(),
+      respondedAt: (data['respondedAt'] as Timestamp?)?.toDate(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'groupId': groupId,
+      'groupName': groupName,
+      'invitedBy': invitedBy,
+      'invitedByName': invitedByName,
+      'invitedEmail': invitedEmail,
+      'inviteCode': inviteCode,
+      'status': status.value,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'expiresAt': expiresAt != null ? Timestamp.fromDate(expiresAt!) : null,
+      'respondedAt': respondedAt != null ? Timestamp.fromDate(respondedAt!) : null,
+    };
+  }
+
+  bool get isExpired {
+    if (expiresAt == null) return false;
+    return DateTime.now().isAfter(expiresAt!);
+  }
+
+  bool get isPending => status == InvitationStatus.pending && !isExpired;
+
+  GroupInvitation copyWith({
+    String? id,
+    String? groupId,
+    String? groupName,
+    String? invitedBy,
+    String? invitedByName,
+    String? invitedEmail,
+    String? inviteCode,
+    InvitationStatus? status,
+    DateTime? createdAt,
+    DateTime? expiresAt,
+    DateTime? respondedAt,
+  }) {
+    return GroupInvitation(
+      id: id ?? this.id,
+      groupId: groupId ?? this.groupId,
+      groupName: groupName ?? this.groupName,
+      invitedBy: invitedBy ?? this.invitedBy,
+      invitedByName: invitedByName ?? this.invitedByName,
+      invitedEmail: invitedEmail ?? this.invitedEmail,
+      inviteCode: inviteCode ?? this.inviteCode,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      expiresAt: expiresAt ?? this.expiresAt,
+      respondedAt: respondedAt ?? this.respondedAt,
+    );
+  }
+}
+
+// --- INVITATION STATUS ENUM ---
+enum InvitationStatus {
+  pending('pending'),
+  accepted('accepted'),
+  declined('declined'),
+  expired('expired'),
+  revoked('revoked');
+
+  final String value;
+  const InvitationStatus(this.value);
+
+  static InvitationStatus fromString(String value) {
+    return InvitationStatus.values.firstWhere(
+      (status) => status.value == value,
+      orElse: () => InvitationStatus.pending,
+    );
+  }
+
+  String get displayName {
+    switch (this) {
+      case InvitationStatus.pending:
+        return 'Pending';
+      case InvitationStatus.accepted:
+        return 'Accepted';
+      case InvitationStatus.declined:
+        return 'Declined';
+      case InvitationStatus.expired:
+        return 'Expired';
+      case InvitationStatus.revoked:
+        return 'Revoked';
+    }
+  }
+
+  Color get color {
+    switch (this) {
+      case InvitationStatus.pending:
+        return Colors.orange;
+      case InvitationStatus.accepted:
+        return Colors.green;
+      case InvitationStatus.declined:
+        return Colors.red;
+      case InvitationStatus.expired:
+        return Colors.grey;
+      case InvitationStatus.revoked:
+        return Colors.grey;
+    }
   }
 }

@@ -1,8 +1,15 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:provider/provider.dart';
+import 'package:simpleexpense/providers/auth_provider.dart';
 import 'package:simpleexpense/providers/groups_provider.dart';
+import 'package:simpleexpense/services/balance_service.dart';
+import 'package:simpleexpense/services/firestore_service.dart';
 import 'package:simpleexpense/theme/app_theme.dart';
+import 'package:simpleexpense/models/models.dart';
+import 'package:simpleexpense/screens/invitation_management_screen.dart';
+import 'share_invite_dialog.dart';
 
 /// Custom header widget for expense screens
 class ExpenseHeaderWidget extends StatelessWidget {
@@ -12,22 +19,49 @@ class ExpenseHeaderWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Consumer<GroupsProvider>(
-        builder: (context, groupsProvider, child) {
+      child: Consumer2<GroupsProvider, AuthProvider>(
+        builder: (context, groupsProvider, authProvider, child) {
           final inviteCode = groupsProvider.currentInviteCode ?? '------';
+          final groupName = groupsProvider.currentGroupName ?? 'Group';
+          final selectedGroup = groupsProvider.selectedGroup;
+          final currentUserId = authProvider.currentUserId;
+          final isAdmin = selectedGroup?.adminId == currentUserId;
+
           return Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppTheme.white),
+                icon: const Icon(Icons.arrow_back, color: AppTheme.textLight),
                 onPressed: () => Navigator.of(context).pop(),
               ),
               const Spacer(),
+              // Manage Invitations button (admin only)
+              if (isAdmin)
+                IconButton(
+                  icon: const Icon(
+                    Icons.people_outline,
+                    color: AppTheme.textLight,
+                    size: 24,
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const InvitationManagementScreen(),
+                      ),
+                    );
+                  },
+                  tooltip: 'Manage Invitations',
+                ),
+              const SizedBox(width: 8),
+              // Share invite code
               GestureDetector(
                 onTap: () {
                   if (inviteCode != '------') {
-                    Share.share(
-                      'Join my group in Simple Expense!\n\nInvite Code: $inviteCode',
-                      subject: 'Join my Simple Expense group',
+                    showDialog(
+                      context: context,
+                      builder: (context) => ShareInviteDialog(
+                        groupName: groupName,
+                        inviteCode: inviteCode,
+                      ),
                     );
                   }
                 },
@@ -38,7 +72,7 @@ class ExpenseHeaderWidget extends StatelessWidget {
                     const Text(
                       'Share Invite Code',
                       style: TextStyle(
-                        color: AppTheme.middleGray,
+                        color: AppTheme.secondaryDark,
                         fontSize: 11,
                         fontWeight: FontWeight.w400,
                       ),
@@ -50,7 +84,7 @@ class ExpenseHeaderWidget extends StatelessWidget {
                         Text(
                           inviteCode,
                           style: const TextStyle(
-                            color: AppTheme.white,
+                            color: AppTheme.textLight,
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1,
@@ -59,7 +93,7 @@ class ExpenseHeaderWidget extends StatelessWidget {
                         const SizedBox(width: 6),
                         const Icon(
                           Icons.share,
-                          color: AppTheme.white,
+                          color: AppTheme.textLight,
                           size: 14,
                         ),
                       ],
@@ -75,49 +109,287 @@ class ExpenseHeaderWidget extends StatelessWidget {
   }
 }
 
-/// Custom group info widget for displaying group name and total balance
+/// Custom group info widget for displaying group name and user's net balance
 class GroupInfoWidget extends StatelessWidget {
   const GroupInfoWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<GroupsProvider>(
-      builder: (context, groupsProvider, child) {
-        return Container(
-          color: Colors.grey[300],
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          child: Row(
+    final balanceService = BalanceService();
+    final firestoreService = FirestoreService();
+
+    return Consumer2<GroupsProvider, AuthProvider>(
+      builder: (context, groupsProvider, authProvider, child) {
+        final groupId = groupsProvider.currentGroupId;
+        final currentUserId = authProvider.currentUserId;
+        final currency = groupsProvider.currentCurrency ?? 'SEK';
+
+        if (groupId == null || currentUserId == null) {
+          return _buildGroupInfoContainer(
+            context,
+            groupsProvider.currentGroupName ?? 'Group Name',
+            '—',
+            AppTheme.textDark,
+          );
+        }
+
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('groups')
+              .doc(groupId)
+              .collection('expenses')
+              .snapshots(),
+          builder: (context, expenseSnapshot) {
+            if (!expenseSnapshot.hasData) {
+              return _buildGroupInfoContainer(
+                context,
+                groupsProvider.currentGroupName ?? 'Group Name',
+                '—',
+                AppTheme.textDark,
+              );
+            }
+
+            final expenses = expenseSnapshot.data!.docs
+                .map((doc) => Expense.fromFirestore(doc))
+                .toList();
+
+            return FutureBuilder<List<GroupMember>>(
+              future: firestoreService.getGroupMembers(groupId),
+              builder: (context, memberSnapshot) {
+                if (!memberSnapshot.hasData) {
+                  return _buildGroupInfoContainer(
+                    context,
+                    groupsProvider.currentGroupName ?? 'Group Name',
+                    '—',
+                    AppTheme.textDark,
+                  );
+                }
+
+                final members = memberSnapshot.data!;
+                final balances =
+                    balanceService.calculateNetBalances(expenses, members);
+                final myBalance = balances[currentUserId] ?? 0.0;
+
+                final isPositive = myBalance > 0.01;
+                final isNegative = myBalance < -0.01;
+
+                String statusText;
+                Color statusColor;
+
+                if (isPositive) {
+                  statusText =
+                      'You are owed ${myBalance.toStringAsFixed(2)} $currency';
+                  statusColor = AppTheme.secondaryDark;
+                } else if (isNegative) {
+                  statusText =
+                      'You owe ${(-myBalance).toStringAsFixed(2)} $currency';
+                  statusColor = AppTheme.primaryDark;
+                } else {
+                  statusText = 'Settled up';
+                  statusColor = AppTheme.textDark;
+                }
+
+                return _buildGroupInfoContainer(
+                  context,
+                  groupsProvider.currentGroupName ?? 'Group Name',
+                  statusText,
+                  statusColor,
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildGroupInfoContainer(
+    BuildContext context,
+    String groupName,
+    String statusText,
+    Color statusColor,
+  ) {
+    return Container(
+      color: Colors.grey[300],
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Row(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(color: AppTheme.background),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  groupName,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textDark,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  statusText,
+                  style: TextStyle(
+                    fontFamily: AppTheme.fontFamilyDisplay,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: statusColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Widget showing user's balance status for a group (You owe / You are owed)
+class GroupBalanceStatusWidget extends StatelessWidget {
+  final String groupId;
+  final String currency;
+  final String? groupName;
+
+  const GroupBalanceStatusWidget({
+    super.key,
+    required this.groupId,
+    required this.currency,
+    this.groupName,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final balanceService = BalanceService();
+    final firestoreService = FirestoreService();
+
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, _) {
+        final currentUserId = authProvider.currentUserId;
+
+        if (currentUserId == null) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(color: AppTheme.lightGray),
+              Text(
+                '—',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: AppTheme.textDark,
+                ),
               ),
-              const SizedBox(width: 12),
-              Column(
+            ],
+          );
+        }
+
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('groups')
+              .doc(groupId)
+              .collection('expenses')
+              .snapshots(),
+          builder: (context, expenseSnapshot) {
+            if (!expenseSnapshot.hasData) {
+              return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    groupsProvider.currentGroupName ?? 'Group Name',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.darkGray,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${groupsProvider.currentGroupTotalBalance.toStringAsFixed(2)} ${groupsProvider.currentCurrency ?? 'SEK'}',
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.darkGray,
+                    '—',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: AppTheme.textDark,
                     ),
                   ),
                 ],
-              ),
-            ],
-          ),
+              );
+            }
+
+            final expenses = expenseSnapshot.data!.docs
+                .map((doc) => Expense.fromFirestore(doc))
+                .toList();
+
+            return FutureBuilder<List<GroupMember>>(
+              future: firestoreService.getGroupMembers(groupId),
+              builder: (context, memberSnapshot) {
+                if (!memberSnapshot.hasData) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '—',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: AppTheme.textDark,
+                        ),
+                      ),
+                    ],
+                  );
+                }
+
+                final members = memberSnapshot.data!;
+                final balances =
+                    balanceService.calculateNetBalances(expenses, members);
+                final myBalance = balances[currentUserId] ?? 0.0;
+
+                final isPositive = myBalance > 0.01;
+                final isNegative = myBalance < -0.01;
+
+                String statusText;
+                String amountText;
+                Color statusColor;
+
+                final displayGroupName = groupName ?? 'Group';
+
+                if (isPositive) {
+                  statusText = '$displayGroupName owes you';
+                  amountText = '${myBalance.toStringAsFixed(0)} $currency';
+                  statusColor = AppTheme.secondaryDark;
+                } else if (isNegative) {
+                  statusText = 'You owe $displayGroupName';
+                  amountText = '${(-myBalance).toStringAsFixed(0)} $currency';
+                  statusColor = AppTheme.primaryDark;
+                } else {
+                  statusText = 'Settled up';
+                  amountText = '';
+                  statusColor = AppTheme.textDark;
+                }
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      statusText,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: AppTheme.textDark,
+                      ),
+                    ),
+                    if (amountText.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        amountText,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: statusColor,
+                        ),
+                      ),
+                    ],
+                  ],
+                );
+              },
+            );
+          },
         );
       },
     );

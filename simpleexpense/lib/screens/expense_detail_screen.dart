@@ -32,7 +32,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
         final currentUser = FirebaseAuth.instance.currentUser;
 
         return Scaffold(
-          backgroundColor: AppTheme.darkGray,
+          backgroundColor: AppTheme.primary,
           body: SafeArea(
             child: Column(
               children: [
@@ -42,7 +42,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                 Expanded(
                   child: Container(
                     width: double.infinity,
-                    decoration: const BoxDecoration(color: AppTheme.white),
+                    decoration: const BoxDecoration(color: AppTheme.textLight),
                     child: SingleChildScrollView(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -82,7 +82,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w500,
-                                    color: AppTheme.darkGray,
+                                    color: AppTheme.textDark,
                                   ),
                                 ),
                                 Text(
@@ -90,7 +90,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: AppTheme.darkGray,
+                                    color: AppTheme.textDark,
                                   ),
                                 ),
                               ],
@@ -108,7 +108,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                               'Split: Custom amounts',
                               style: const TextStyle(
                                 fontSize: 14,
-                                color: AppTheme.darkGray,
+                                color: AppTheme.textDark,
                                 height: 1.6,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -160,7 +160,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                               style: const TextStyle(
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.bold,
-                                                color: AppTheme.darkGray,
+                                                color: AppTheme.textDark,
                                               ),
                                             ),
                                           ],
@@ -186,7 +186,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                   child: ElevatedButton(
                                     onPressed: () => Navigator.of(context).pop(),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppTheme.darkGray,
+                                      backgroundColor: AppTheme.primary,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(4),
                                       ),
