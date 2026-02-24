@@ -116,28 +116,31 @@ class _CreateGroupStep3State extends State<CreateGroupStep3> {
                   const SizedBox(height: 24),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       border: Border.all(color: AppTheme.secondaryDark),
                       borderRadius: BorderRadius.circular(24),
                     ),
                     child: DropdownButton<String>(
-                        value: _currency,
-                        isExpanded: true,
-                        underline: const SizedBox.shrink(),
-                        items: const [
-                          DropdownMenuItem(value: 'SEK', child: Text('SEK')),
-                          DropdownMenuItem(value: 'USD', child: Text('USD')),
-                          DropdownMenuItem(value: 'EUR', child: Text('EUR')),
-                        ],
-                        // Disable the change value when creating the group
-                        onChanged: _isCreating
-                            ? null
-                            : (v) {
-                                if (v != null) setState(() => _currency = v);
-                              },
-                      ),
+                      value: _currency,
+                      isExpanded: true,
+                      underline: const SizedBox.shrink(),
+                      items: const [
+                        DropdownMenuItem(value: 'SEK', child: Text('SEK')),
+                        DropdownMenuItem(value: 'USD', child: Text('USD')),
+                        DropdownMenuItem(value: 'EUR', child: Text('EUR')),
+                      ],
+                      // Disable the change value when creating the group
+                      onChanged: _isCreating
+                          ? null
+                          : (v) {
+                              if (v != null) setState(() => _currency = v);
+                            },
                     ),
+                  ),
                   const SizedBox(height: 8),
                   const Text(
                     'Applies to all expenses',

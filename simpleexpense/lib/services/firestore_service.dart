@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'dart:math';
 import '../models/models.dart';
 
 class FirestoreService {
@@ -116,14 +115,6 @@ class FirestoreService {
     await _db.collection('groups').doc(groupId).update({
       'members': FieldValue.arrayUnion([uid]),
     });
-  }
-
-  String _generateInviteCode() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    Random rnd = Random();
-    return String.fromCharCodes(
-      Iterable.generate(6, (_) => chars.codeUnitAt(rnd.nextInt(chars.length))),
-    );
   }
 
   // --- INVITATIONS ---

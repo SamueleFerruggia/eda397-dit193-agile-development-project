@@ -118,7 +118,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           Expanded(
             child: Container(
               width: double.infinity,
-              color: AppTheme.textLight,
+              color: AppTheme.background,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -128,9 +128,10 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     decoration: InputDecoration(
                       hintText: 'What is this for?',
                       filled: true,
-                      fillColor: AppTheme.textLight,
+                      fillColor: AppTheme.background,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: AppTheme.secondaryDark.withOpacity(0.3)),
                       ),
                     ),
                   ),
@@ -146,9 +147,10 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                           decoration: InputDecoration(
                             hintText: '0.00',
                             filled: true,
-                            fillColor: AppTheme.textLight,
+                            fillColor: AppTheme.background,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(color: AppTheme.secondaryDark.withOpacity(0.3)),
                             ),
                           ),
                         ),
@@ -172,7 +174,8 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
+                      color: AppTheme.background,
+                      border: Border.all(color: AppTheme.secondaryDark.withOpacity(0.3)),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: _isLoadingMembers
@@ -203,20 +206,22 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           ),
           Container(
             padding: const EdgeInsets.all(24),
-            color: AppTheme.textLight,
+            color: AppTheme.background,
             child: SizedBox(
               height: 52,
+              width: double.infinity,
               child: ElevatedButton(
                 onPressed: _handleNext, // Call Next
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primary,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(26),
                   ),
+                  elevation: 0,
                 ),
                 child: const Text(
                   'Next',
-                  style: TextStyle(fontSize: 16, color: Colors.white),
+                  style: TextStyle(fontSize: 16, color: AppTheme.textLight),
                 ),
               ),
             ),
@@ -226,7 +231,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
     if (widget.embedInParent) {
       return Container(
-        color: AppTheme.textLight,
+        color: AppTheme.background,
         child: body,
       );
     }
@@ -234,16 +239,16 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        backgroundColor: AppTheme.background,
+        backgroundColor: AppTheme.primary,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.textDark),
+          icon: const Icon(Icons.arrow_back, color: AppTheme.textLight),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
           'Add Expense',
           style: TextStyle(
-            color: AppTheme.textDark,
+            color: AppTheme.textLight,
             fontSize: 18,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.5,
