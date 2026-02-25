@@ -41,75 +41,6 @@ class _InvitationManagementScreenState
     );
   }
 
-  Future<void> _sendInvitation() async {
-    // Show info dialog explaining that the group already has an invite code
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Group Invite Code'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Your group already has a permanent invite code that anyone can use to join.',
-              style: TextStyle(fontSize: 14),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'To invite members:',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '1. Click "Share Invite" button\n'
-              '2. Share the code with people you want to invite\n'
-              '3. They enter the code in "Join Group" screen',
-              style: TextStyle(fontSize: 13),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.info_outline, size: 16, color: Colors.blue[700]),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'The same code works for everyone and never expires',
-                      style: TextStyle(fontSize: 12, color: Colors.blue[700]),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Got it'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _showShareDialog();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primary,
-            ),
-            child: const Text('Share Now'),
-          ),
-        ],
-      ),
-    );
-  }
-
-
   @override
   Widget build(BuildContext context) {
     final groupsProvider = context.watch<GroupsProvider>();
@@ -143,7 +74,7 @@ class _InvitationManagementScreenState
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 2),
                 ),
@@ -310,7 +241,7 @@ class _InvitationManagementScreenState
         child: Row(
           children: [
             CircleAvatar(
-              backgroundColor: AppTheme.primary.withOpacity(0.1),
+              backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
               child: Text(
                 member.name.isNotEmpty ? member.name[0].toUpperCase() : '?',
                 style: const TextStyle(
@@ -341,7 +272,7 @@ class _InvitationManagementScreenState
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: AppTheme.primary.withOpacity(0.1),
+                            color: AppTheme.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Text(
