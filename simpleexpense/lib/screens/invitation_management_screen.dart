@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/models.dart';
+import '../providers/auth_provider.dart';
 import '../providers/groups_provider.dart';
 import '../services/firestore_service.dart';
 import '../theme/app_theme.dart';
@@ -16,6 +17,8 @@ class InvitationManagementScreen extends StatefulWidget {
 
 class _InvitationManagementScreenState
     extends State<InvitationManagementScreen> {
+
+  final FirestoreService _firestoreService = FirestoreService();
 
   void _showShareDialog() {
     final groupsProvider = context.read<GroupsProvider>();
@@ -41,196 +44,277 @@ class _InvitationManagementScreenState
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final groupsProvider = context.watch<GroupsProvider>();
-    final groupName = groupsProvider.currentGroupName ?? 'Group';
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Group Members',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
+  Future<void> _removeMember(String memberId, String memberName) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove Member'),
+        content: Text('Are you sure you want to remove $memberName from the group?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
           ),
-        ),
-        backgroundColor: AppTheme.background,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: Column(
-        children: [
-          // Group Info Section
-          Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.people, color: AppTheme.primary),
-                    const SizedBox(width: 8),
-                    Text(
-                      groupName,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Invite Code',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            groupsProvider.currentInviteCode ?? '------',
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 2,
-                              color: AppTheme.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          'Members',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${groupsProvider.currentGroupMembers}',
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // Action Button
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _showShareDialog,
-                icon: const Icon(Icons.share, size: 20),
-                label: const Text('Share Invite Code'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Group Members List
-          Expanded(
-            child: FutureBuilder<List<GroupMember>>(
-              future: FirestoreService().getGroupMembers(groupsProvider.currentGroupId ?? ''),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Text('Error: ${snapshot.error}'),
-                  );
-                }
-
-                final members = snapshot.data ?? [];
-
-                if (members.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.people_outline,
-                          size: 64,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No members yet',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: members.length,
-                  itemBuilder: (context, index) {
-                    final member = members[index];
-                    return _buildMemberCard(member);
-                  },
-                );
-              },
-            ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Remove'),
           ),
         ],
       ),
     );
+
+    if (!mounted) return;
+    if (confirmed != true) return;
+
+    try {
+      final groupsProvider = context.read<GroupsProvider>();
+      final currentGroupId = groupsProvider.currentGroupId;
+
+      if (currentGroupId == null) {
+        throw Exception('Group ID not found');
+      }
+
+      await _firestoreService.removeMemberFromGroup(
+        groupId: currentGroupId,
+        memberId: memberId,
+      );
+
+      if (mounted) {
+        setState(() {}); // Refresh the UI
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Member removed successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error removing member: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
-  Widget _buildMemberCard(GroupMember member) {
-    final isAdmin = member.role == 'admin';
-    
+  @override
+  Widget build(BuildContext context) {
+    return Consumer2<GroupsProvider, AuthProvider>(
+      builder: (context, groupsProvider, authProvider, child) {
+        final groupName = groupsProvider.currentGroupName ?? 'Group';
+        final currentUserId = authProvider.currentUserId;
+        final isAdmin = groupsProvider.selectedGroup?.adminId == currentUserId;
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text(
+              'Group Members',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            backgroundColor: AppTheme.background,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.black),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ),
+          body: Column(
+            children: [
+              // Group Info Section
+              Container(
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.people, color: AppTheme.primary),
+                        const SizedBox(width: 8),
+                        Text(
+                          groupName,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Invite Code',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                groupsProvider.currentInviteCode ?? '------',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 2,
+                                  color: AppTheme.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              'Members',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${groupsProvider.currentGroupMembers}',
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // Action Button - Only show for admins
+              if (isAdmin) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _showShareDialog,
+                      icon: const Icon(Icons.share, size: 20),
+                      label: const Text('Share Invite Code'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // Group Members List
+              Expanded(
+                child: FutureBuilder<List<GroupMember>>(
+                  future: _firestoreService.getGroupMembers(
+                    groupsProvider.currentGroupId ?? '',
+                  ),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    }
+
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text('Error: ${snapshot.error}'),
+                      );
+                    }
+
+                    final members = snapshot.data ?? [];
+
+                    if (members.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.people_outline,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No members yet',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: members.length,
+                      itemBuilder: (context, index) {
+                        final member = members[index];
+                        final isMemberAdmin = member.role == 'admin';
+                        final isCurrentUser = member.uid == currentUserId;
+
+                        return _buildMemberCard(
+                          member,
+                          isMemberAdmin: isMemberAdmin,
+                          isCurrentUser: isCurrentUser,
+                          isAdmin: isAdmin,
+                          onRemove: () => _removeMember(member.uid, member.name),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMemberCard(
+    GroupMember member, {
+    required bool isMemberAdmin,
+    required bool isCurrentUser,
+    required bool isAdmin,
+    required VoidCallback onRemove,
+  }) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
@@ -264,7 +348,29 @@ class _InvitationManagementScreenState
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      if (isAdmin) ...[
+                      if (isCurrentUser)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              'You',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue,
+                              ),
+                            ),
+                          ),
+                        ),
+                      if (isMemberAdmin) ...[
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -298,11 +404,22 @@ class _InvitationManagementScreenState
                 ],
               ),
             ),
-            Icon(
-              Icons.check_circle,
-              color: Colors.green,
-              size: 20,
-            ),
+            // Remove button - only show for admins, and not for the current user or other admins
+            if (isAdmin && !isCurrentUser && !isMemberAdmin)
+              IconButton(
+                icon: const Icon(
+                  Icons.remove_circle,
+                  color: Colors.red,
+                ),
+                onPressed: onRemove,
+                tooltip: 'Remove member',
+              )
+            else if (!isAdmin || isCurrentUser || isMemberAdmin)
+              Icon(
+                Icons.check_circle,
+                color: Colors.green,
+                size: 20,
+              ),
           ],
         ),
       ),

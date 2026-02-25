@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../models/models.dart';
 
@@ -114,8 +115,26 @@ class FirestoreService {
       throw Exception('You are already a member of this group.');
     }
 
+    // Ensure user document exists before adding to group
+    final userDoc = await _db.collection('users').doc(uid).get();
+    if (!userDoc.exists) {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await saveUser(uid, user.email ?? '', user.displayName ?? 'User');
+      }
+    }
+
     await _db.collection('groups').doc(groupId).update({
       'members': FieldValue.arrayUnion([uid]),
+    });
+  }
+
+  Future<void> removeMemberFromGroup({
+    required String groupId,
+    required String memberId,
+  }) async {
+    await _db.collection('groups').doc(groupId).update({
+      'members': FieldValue.arrayRemove([memberId]),
     });
   }
 
