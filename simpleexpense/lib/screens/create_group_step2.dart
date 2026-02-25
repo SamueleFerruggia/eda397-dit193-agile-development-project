@@ -159,10 +159,12 @@ class _CreateGroupStep2State extends State<CreateGroupStep2> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   GestureDetector(
-                    onTap: () {
-                      Share.share(
-                        'Join my group "${widget.groupName}" in Simple Expense!\n\nInvite Code: $_inviteCode',
-                        subject: 'Join "${widget.groupName}" group',
+                    onTap: () async {
+                      await SharePlus.instance.share(
+                        ShareParams(
+                          text: 'Join my group "${widget.groupName}" with code: $_inviteCode',
+                          subject: 'Group Invite',
+                        ),
                       );
                     },
                     child: Container(
