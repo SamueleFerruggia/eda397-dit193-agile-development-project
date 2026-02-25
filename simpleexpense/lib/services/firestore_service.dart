@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'dart:math';
+import 'package:flutter/foundation.dart';
 import '../models/models.dart';
 
 class FirestoreService {
@@ -87,7 +87,7 @@ class FirestoreService {
 
       return members;
     } catch (e) {
-      print('Error fetching group members: $e');
+      debugPrint('Error fetching group members: $e');
       return [];
     }
   }
@@ -117,14 +117,6 @@ class FirestoreService {
     await _db.collection('groups').doc(groupId).update({
       'members': FieldValue.arrayUnion([uid]),
     });
-  }
-
-  String _generateInviteCode() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    Random rnd = Random();
-    return String.fromCharCodes(
-      Iterable.generate(6, (_) => chars.codeUnitAt(rnd.nextInt(chars.length))),
-    );
   }
 
   // --- INVITATIONS ---
@@ -173,7 +165,7 @@ class FirestoreService {
           .map((doc) => GroupInvitation.fromFirestore(doc))
           .toList();
     } catch (e) {
-      print('Error fetching group invitations: $e');
+      debugPrint('Error fetching group invitations: $e');
       return [];
     }
   }
@@ -211,7 +203,7 @@ class FirestoreService {
           .where((inv) => !inv.isExpired)
           .toList();
     } catch (e) {
-      print('Error fetching pending invitations: $e');
+      debugPrint('Error fetching pending invitations: $e');
       return [];
     }
   }
@@ -294,7 +286,7 @@ class FirestoreService {
 
       return invitation;
     } catch (e) {
-      print('Error fetching invitation by code: $e');
+      debugPrint('Error fetching invitation by code: $e');
       return null;
     }
   }
@@ -313,7 +305,7 @@ class FirestoreService {
           .where((inv) => !inv.isExpired)
           .length;
     } catch (e) {
-      print('Error counting pending invitations: $e');
+      debugPrint('Error counting pending invitations: $e');
       return 0;
     }
   }

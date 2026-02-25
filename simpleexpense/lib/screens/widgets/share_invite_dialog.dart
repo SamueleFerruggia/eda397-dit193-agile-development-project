@@ -40,10 +40,12 @@ The invite code expires in 7 days.
 
     try {
       final box = context.findRenderObject() as RenderBox?;
-      await Share.share(
-        message,
-        subject: 'Join $groupName on SimplExpense',
-        sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
+      await SharePlus.instance.share(
+        ShareParams(
+          text: message,
+          subject: 'Join $groupName on SimplExpense',
+          sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
+        ),
       );
       if (context.mounted) {
         Navigator.of(context).pop();
@@ -114,10 +116,10 @@ The invite code expires in 7 days.
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               decoration: BoxDecoration(
-                color: AppTheme.primary.withOpacity(0.1),
+                color: AppTheme.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppTheme.primary.withOpacity(0.3),
+                  color: AppTheme.primary.withValues(alpha: 0.3),
                   width: 2,
                 ),
               ),
@@ -189,7 +191,7 @@ The invite code expires in 7 days.
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
+                color: Colors.blue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
