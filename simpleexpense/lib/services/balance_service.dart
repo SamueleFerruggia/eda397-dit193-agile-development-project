@@ -20,16 +20,15 @@ class BalanceService {
     // Process each expense
     for (var expense in expenses) {
       // The payer gets credited the full amount (positive balance)
-      balances[expense.payerId] = 
-        (balances[expense.payerId] ?? 0) + expense.amount;
+      balances[expense.payerId] =
+          (balances[expense.payerId] ?? 0) + expense.amount;
 
       // Calculate how much each participant owes
       double splitAmount = expense.amount / expense.splitWith.length;
 
       // Deduct the split amount from each participant
       for (var participantId in expense.splitWith) {
-        balances[participantId] = 
-          (balances[participantId] ?? 0) - splitAmount;
+        balances[participantId] = (balances[participantId] ?? 0) - splitAmount;
       }
     }
 
@@ -68,11 +67,13 @@ class BalanceService {
       double amount = min(debtors[i].value, creditors[j].value);
 
       // Create a settlement transaction
-      settlements.add(Settlement(
-        fromUserId: debtors[i].key,
-        toUserId: creditors[j].key,
-        amount: amount,
-      ));
+      settlements.add(
+        Settlement(
+          fromUserId: debtors[i].key,
+          toUserId: creditors[j].key,
+          amount: amount,
+        ),
+      );
 
       // Update remaining amounts
       debtors[i] = MapEntry(debtors[i].key, debtors[i].value - amount);
@@ -120,9 +121,12 @@ class BalanceService {
     Map<String, double> balances,
   ) {
     final allSettlements = calculateSettlements(balances);
-    return allSettlements.where((settlement) =>
-      settlement.fromUserId == userId || settlement.toUserId == userId
-    ).toList();
+    return allSettlements
+        .where(
+          (settlement) =>
+              settlement.fromUserId == userId || settlement.toUserId == userId,
+        )
+        .toList();
   }
 }
 

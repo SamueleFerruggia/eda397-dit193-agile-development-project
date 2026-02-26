@@ -2,13 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 /// Test Run: Expense creation and equal distribution verification
 ///
-/// Covers FR-3 (Adding Expenses) and FR-4 (Equal Split Logic)
-///
-/// NOTE:
-/// These are pure Dart tests that focus on the business rule:
-/// "When an expense is added and split equally, each selected member
-///  should owe the same share and the sum of all shares must equal
-///  the total expense amount."
 
 void main() {
   group('Equal split logic (FR-3, FR-4)', () {
@@ -78,11 +71,93 @@ void main() {
       expect(totalShares, 0.0);
     });
   });
+
+  group('Split validation and percentage mode', () {
+    test('Exact-amount split is valid when sums to total', () {
+      const amount = 100.0;
+      final splits = {'u1': 70.0, 'u2': 30.0};
+
+      expect(_isValidSplitByAmount(amount, splits), isTrue);
+    });
+
+    test('Exact-amount split is invalid when it does not sum to total', () {
+      const amount = 100.0;
+      final splits = {'u1': 70.0, 'u2': 20.0};
+
+      expect(_isValidSplitByAmount(amount, splits), isFalse);
+    });
+
+    test('Percentage split converts to amounts and stays valid when 100%', () {
+      const amount = 120.0;
+      final percentages = {'u1': 25.0, 'u2': 25.0, 'u3': 50.0};
+
+      final amounts = _amountsFromPercentages(amount, percentages);
+
+      // Total amounts should be roughly equal to original amount.
+      final totalAmounts = amounts.values.fold<double>(
+        0.0,
+        (sum, v) => sum + v,
+      );
+      expect((totalAmounts - amount).abs() < 0.01, isTrue);
+
+      // And percentage validation should pass when summing to 100%.
+      expect(_isValidSplitByPercentage(percentages), isTrue);
+    });
+
+    test('Percentage split is invalid when percentages do not sum to 100', () {
+      final percentages = {'u1': 30.0, 'u2': 30.0, 'u3': 30.0}; // 90%
+
+      expect(_isValidSplitByPercentage(percentages), isFalse);
+    });
+
+    group('Decimal accuracy in uneven splits', () {
+      test('Uneven exact amounts with cents can still be valid', () {
+        const amount = 100.0;
+        final splits = {'u1': 33.33, 'u2': 33.33, 'u3': 33.34};
+
+        // Sums exactly to 100.00, should be accepted.
+        expect(_isValidSplitByAmount(amount, splits), isTrue);
+      });
+
+      test(
+        'Amounts that sum 0.01 away from total are rejected (strict check)',
+        () {
+          const amount = 10.0;
+          final splits = {
+            'u1': 3.33,
+            'u2': 3.33,
+            'u3': 3.33,
+          }; // 9.99, off by 0.01
+
+          // Current logic uses a strict < 0.01 tolerance, so this is invalid.
+          expect(_isValidSplitByAmount(amount, splits), isFalse);
+        },
+      );
+
+      test('Decimal percentages that sum to 100% are valid', () {
+        final percentages = {'u1': 33.33, 'u2': 33.33, 'u3': 33.34}; // 100.00%
+
+        expect(_isValidSplitByPercentage(percentages), isTrue);
+      });
+
+      test(
+        'Decimal percentages that are off by 0.01 are treated as invalid',
+        () {
+          final percentages = {
+            'u1': 33.33,
+            'u2': 33.33,
+            'u3': 33.33,
+          }; // 99.99%, off by 0.01
+
+          // Again, strict < 0.01 tolerance → invalid.
+          expect(_isValidSplitByPercentage(percentages), isFalse);
+        },
+      );
+    });
+  });
 }
 
 /// Helper used only in tests to model the "equal split" behaviour
-/// described in FR-4. It mimics what the UI does conceptually:
-/// divide the total amount equally across all selected members.
 Map<String, double> _calculateEqualSplit(
   double amount,
   List<String> memberIds,
@@ -96,4 +171,27 @@ Map<String, double> _calculateEqualSplit(
   final perMember = amount / memberIds.length;
 
   return {for (final id in memberIds) id: perMember};
+}
+
+/// Mirrors the percentage mode calculation in ExpenseSplitScreen:
+/// given total amount and per-user percentages, return per-user amounts.
+Map<String, double> _amountsFromPercentages(
+  double totalAmount,
+  Map<String, double> percentages,
+) {
+  return percentages.map(
+    (userId, pct) => MapEntry(userId, totalAmount * (pct / 100.0)),
+  );
+}
+
+/// Mirrors _isValidSplit (non-percentage branch) in ExpenseSplitScreen.
+bool _isValidSplitByAmount(double totalAmount, Map<String, double> splits) {
+  final totalSplit = splits.values.fold<double>(0.0, (sum, v) => sum + v);
+  return (totalSplit - totalAmount).abs() < 0.01;
+}
+
+/// Mirrors _isValidSplit (percentage branch) in ExpenseSplitScreen.
+bool _isValidSplitByPercentage(Map<String, double> percentages) {
+  final totalPct = percentages.values.fold<double>(0.0, (sum, v) => sum + v);
+  return (totalPct - 100.0).abs() < 0.01;
 }

@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:simpleexpense/models/models.dart';
 import 'package:simpleexpense/services/balance_service.dart';
 
-/// Pure unit tests for BalanceService: net balances and settlements.
 /// Uses in-memory Expense/GroupMember data only.
 void main() {
   late BalanceService balanceService;
