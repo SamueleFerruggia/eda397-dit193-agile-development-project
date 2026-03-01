@@ -14,11 +14,14 @@ import '../models/models.dart';
 class ExpenseListScreen extends StatefulWidget {
   final String groupId;
   final bool embedInParent;
+  /// When set (e.g. by GroupDashboard), the current filtered/sorted list is written here for export.
+  final ValueNotifier<List<Expense>?>? expensesForExport;
 
   const ExpenseListScreen({
     super.key,
     required this.groupId,
     this.embedInParent = false,
+    this.expensesForExport,
   });
 
   @override
@@ -101,17 +104,25 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
   Widget _buildSearchBar() {
     return Container(
       color: AppTheme.background,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: TextField(
         controller: _searchController,
-        style: const TextStyle(color: AppTheme.primary),
+        style: const TextStyle(color: AppTheme.primary, fontSize: 14),
         decoration: InputDecoration(
           hintText: 'Search expenses...',
-          hintStyle: TextStyle(color: AppTheme.secondaryDark),
-          prefixIcon: const Icon(Icons.search, color: AppTheme.primary),
+          hintStyle: TextStyle(color: AppTheme.secondaryDark, fontSize: 14),
+          prefixIcon: const Icon(
+            Icons.search,
+            color: AppTheme.primary,
+            size: 20,
+          ),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-                  icon: const Icon(Icons.clear, color: AppTheme.secondaryDark),
+                  icon: const Icon(
+                    Icons.clear,
+                    color: AppTheme.secondaryDark,
+                    size: 20,
+                  ),
                   onPressed: () {
                     setState(() {
                       _searchController.clear();
@@ -123,24 +134,24 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
           filled: true,
           fillColor: AppTheme.background,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide(
               color: AppTheme.secondaryDark.withOpacity(0.3),
             ),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide(
               color: AppTheme.secondaryDark.withOpacity(0.3),
             ),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide(color: AppTheme.primary, width: 2),
           ),
           contentPadding: const EdgeInsets.symmetric(
-            vertical: 16,
-            horizontal: 16,
+            vertical: 10,
+            horizontal: 12,
           ),
         ),
         onChanged: (value) {
@@ -166,12 +177,14 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
+          widget.expensesForExport?.value = null;
           return const Center(
             child: CircularProgressIndicator(color: AppTheme.primary),
           );
         }
 
         if (snapshot.hasError) {
+          widget.expensesForExport?.value = null;
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -194,6 +207,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
         }
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          widget.expensesForExport?.value = null;
           return _buildEmptyState(context);
         }
 
@@ -224,6 +238,11 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
         // Apply sorting
         _sortExpenses(expensesList);
 
+        // Expose current list for CSV export (header reads this)
+        if (widget.expensesForExport != null) {
+          widget.expensesForExport!.value = List.from(expensesList);
+        }
+
         // Calculate total balance
         final totalBalance = expensesList.fold(
           0.0,
@@ -233,14 +252,13 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
         return Column(
           children: [
             _buildFilterChips(),
-            _buildExpenseStats(expensesList, totalBalance, groupsProvider),
             Expanded(
               child: expensesList.isEmpty
                   ? _buildNoResultsState()
                   : ListView.builder(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
-                        vertical: 8,
+                        vertical: 4,
                       ),
                       itemCount: expensesList.length,
                       itemBuilder: (context, index) {
@@ -271,7 +289,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
   /// Filter chips for quick filtering
   Widget _buildFilterChips() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
@@ -290,7 +308,8 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
   Widget _buildFilterChip(String label) {
     final isSelected = _filterType == label;
     return FilterChip(
-      label: Text(label),
+      label: Text(label, style: const TextStyle(fontSize: 12)),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       selected: isSelected,
       onSelected: (selected) {
         setState(() {
@@ -304,62 +323,6 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
       ),
       checkmarkColor: AppTheme.textLight,
-    );
-  }
-
-  /// Expense statistics summary
-  Widget _buildExpenseStats(
-    List<Expense> expenses,
-    double totalBalance,
-    GroupsProvider groupsProvider,
-  ) {
-    final currency = groupsProvider.currentCurrency ?? 'SEK';
-    final currentUserId = context.read<AuthProvider>().currentUserId;
-
-    final myExpenses = expenses.where((e) => e.payerId == currentUserId).length;
-    final othersExpenses = expenses.length - myExpenses;
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppTheme.background,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildStatItem('Total', '${expenses.length}', Icons.receipt_long),
-          _buildStatItem('Mine', '$myExpenses', Icons.person),
-          _buildStatItem('Others', '$othersExpenses', Icons.people),
-          _buildStatItem(
-            'Amount',
-            '${totalBalance.toStringAsFixed(0)} $currency',
-            Icons.attach_money,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatItem(String label, String value, IconData icon) {
-    return Column(
-      children: [
-        Icon(icon, size: 20, color: AppTheme.secondaryDark),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.primary,
-          ),
-        ),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 11, color: AppTheme.secondaryDark),
-        ),
-      ],
     );
   }
 
@@ -634,15 +597,15 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
   ) {
     return Container(
       color: AppTheme.background,
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
       child: Row(
         children: [
           Expanded(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
               decoration: BoxDecoration(
                 color: AppTheme.primary,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: DropdownButton<String>(
                 value: _sortType,
@@ -737,26 +700,26 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           GestureDetector(
             onTap: () => _navigateToAddExpense(context),
             child: Container(
-              width: 56,
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              width: 52,
+              padding: const EdgeInsets.symmetric(vertical: 6),
               decoration: BoxDecoration(
                 color: AppTheme.primary,
-                borderRadius: BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.add, color: AppTheme.textLight, size: 24),
-                  const SizedBox(height: 2),
+                  const Icon(Icons.add, color: AppTheme.textLight, size: 20),
+                  const SizedBox(height: 1),
                   const Text(
                     'Expense',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 10,
                       fontWeight: FontWeight.w500,
                       color: AppTheme.textLight,
                     ),
