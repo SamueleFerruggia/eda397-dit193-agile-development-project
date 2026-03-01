@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:simpleexpense/models/models.dart';
 import 'package:simpleexpense/providers/groups_provider.dart';
 import 'package:simpleexpense/screens/expense_list_screen.dart';
 import 'package:simpleexpense/screens/balance_screen.dart';
@@ -17,6 +18,8 @@ class GroupDashboardScreen extends StatefulWidget {
 
 class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
   int _selectedIndex = 0;
+  final ValueNotifier<List<Expense>?> _expensesForExport =
+      ValueNotifier<List<Expense>?>(null);
 
   @override
   void initState() {
@@ -24,6 +27,12 @@ class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<GroupsProvider>().selectGroup(widget.groupId);
     });
+  }
+
+  @override
+  void dispose() {
+    _expensesForExport.dispose();
+    super.dispose();
   }
 
   @override
@@ -50,7 +59,7 @@ class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
           body: SafeArea(
             child: Column(
               children: [
-                const ExpenseHeaderWidget(),
+                ExpenseHeaderWidget(expensesForExport: _expensesForExport),
                 const GroupInfoWidget(),
                 Expanded(
                   child: IndexedStack(
@@ -59,6 +68,7 @@ class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
                       ExpenseListScreen(
                         groupId: widget.groupId,
                         embedInParent: true,
+                        expensesForExport: _expensesForExport,
                       ),
                       BalanceScreen(
                         groupId: widget.groupId,
