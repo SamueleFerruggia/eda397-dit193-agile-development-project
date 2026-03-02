@@ -131,7 +131,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       fillColor: AppTheme.background,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: AppTheme.secondaryDark.withOpacity(0.3)),
+                        borderSide: BorderSide(
+                          color: AppTheme.secondaryDark.withValues(alpha: 0.3),
+                        ),
                       ),
                     ),
                   ),
@@ -150,7 +152,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                             fillColor: AppTheme.background,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: AppTheme.secondaryDark.withOpacity(0.3)),
+                              borderSide: BorderSide(
+                                color: AppTheme.secondaryDark.withValues(alpha: 0.3),
+                              ),
                             ),
                           ),
                         ),
@@ -175,7 +179,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
                       color: AppTheme.background,
-                      border: Border.all(color: AppTheme.secondaryDark.withOpacity(0.3)),
+                      border: Border.all(
+                        color: AppTheme.secondaryDark.withValues(alpha: 0.3),
+                      ),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: _isLoadingMembers

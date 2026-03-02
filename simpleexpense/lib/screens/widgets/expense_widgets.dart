@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:simpleexpense/providers/auth_provider.dart';
 import 'package:simpleexpense/providers/groups_provider.dart';
@@ -23,9 +22,6 @@ class ExpenseHeaderWidget extends StatelessWidget {
         builder: (context, groupsProvider, authProvider, child) {
           final inviteCode = groupsProvider.currentInviteCode ?? '------';
           final groupName = groupsProvider.currentGroupName ?? 'Group';
-          final selectedGroup = groupsProvider.selectedGroup;
-          final currentUserId = authProvider.currentUserId;
-          final isAdmin = selectedGroup?.adminId == currentUserId;
 
           return Row(
             children: [
@@ -34,23 +30,22 @@ class ExpenseHeaderWidget extends StatelessWidget {
                 onPressed: () => Navigator.of(context).pop(),
               ),
               const Spacer(),
-              // Manage Invitations button (admin only)
-              if (isAdmin)
-                IconButton(
-                  icon: const Icon(
-                    Icons.people_outline,
-                    color: AppTheme.textLight,
-                    size: 24,
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const InvitationManagementScreen(),
-                      ),
-                    );
-                  },
-                  tooltip: 'Manage Invitations',
+              // Group members / invitations (visible to all)
+              IconButton(
+                icon: const Icon(
+                  Icons.people_outline,
+                  color: AppTheme.textLight,
+                  size: 24,
                 ),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const InvitationManagementScreen(),
+                    ),
+                  );
+                },
+                tooltip: 'Group',
+              ),
               const SizedBox(width: 8),
               // Share invite code
               GestureDetector(

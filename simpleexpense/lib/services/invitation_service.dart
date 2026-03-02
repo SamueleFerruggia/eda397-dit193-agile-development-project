@@ -53,10 +53,12 @@ The invite code expires in 7 days.
 
     try {
       final box = context.findRenderObject() as RenderBox?;
-      await Share.share(
-        message,
-        subject: 'Join $groupName on SimplExpense',
-        sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
+      await SharePlus.instance.share(
+        ShareParams(
+          text: message,
+          subject: 'Join $groupName on SimplExpense',
+          sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
+        ),
       );
     } catch (e) {
       throw Exception('Failed to share invitation: $e');
