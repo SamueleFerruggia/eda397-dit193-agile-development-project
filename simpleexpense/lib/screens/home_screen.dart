@@ -69,8 +69,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   if (!context.mounted) return;
 
+                  if (!context.mounted) return;
+
                   if (confirm == true) {
                     await authProvider.logout();
+
+                    if (!context.mounted) return;
+
 
                     if (!context.mounted) return;
 
@@ -125,6 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         height: 48,
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.3),
+                          color: Colors.white.withValues(alpha: 0.3),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -160,6 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
+                      color: AppTheme.primary.withValues(alpha:0.3),
                       color: AppTheme.primary.withValues(alpha:0.3),
                       width: 2,
                     ),
@@ -535,7 +542,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         borderRadius: BorderRadius.circular(6),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: Colors.black.withOpacity(0.06),
+                                            color: Colors.black.withValues(alpha: 0.06),
                                             blurRadius: 4,
                                             offset: const Offset(0, 1),
                                           ),
@@ -608,7 +615,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   borderRadius: BorderRadius.circular(6),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.06),
+                                      color: Colors.black.withValues(alpha: 0.06),
                                       blurRadius: 4,
                                       offset: const Offset(0, 1),
                                     ),
