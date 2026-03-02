@@ -136,13 +136,13 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide(
-              color: AppTheme.secondaryDark.withOpacity(0.3),
+              color: AppTheme.secondaryDark.withValues(alpha: 0.3),
             ),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide(
-              color: AppTheme.secondaryDark.withOpacity(0.3),
+              color: AppTheme.secondaryDark.withValues(alpha: 0.3),
             ),
           ),
           focusedBorder: OutlineInputBorder(
@@ -246,7 +246,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
         // Calculate total balance
         final totalBalance = expensesList.fold(
           0.0,
-          (sum, expense) => sum + expense.amount,
+          (total, expense) => total + expense.amount,
         );
 
         return Column(
@@ -462,7 +462,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               offset: const Offset(0, 2),
               blurRadius: 6,
             ),
@@ -478,8 +478,8 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                 height: 48,
                 decoration: BoxDecoration(
                   color: isPaidByMe
-                      ? Colors.green.withOpacity(0.1)
-                      : Colors.blue.withOpacity(0.1),
+                      ? Colors.green.withValues(alpha: 0.1)
+                      : Colors.blue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -548,7 +548,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${expense.amount.toStringAsFixed(2)}',
+                    expense.amount.toStringAsFixed(2),
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,

@@ -30,9 +30,6 @@ class ExpenseHeaderWidget extends StatelessWidget {
         builder: (context, groupsProvider, authProvider, child) {
           final inviteCode = groupsProvider.currentInviteCode ?? '------';
           final groupName = groupsProvider.currentGroupName ?? 'Group';
-          final selectedGroup = groupsProvider.selectedGroup;
-          final currentUserId = authProvider.currentUserId;
-          final isAdmin = selectedGroup?.adminId == currentUserId;
 
           return Row(
             children: [

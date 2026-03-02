@@ -127,9 +127,10 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
   bool _isValidSplit() {
     if (_splitMode == 'Percentage') {
       final totalPercentage = _getTotalPercentage();
-      return (totalPercentage - 100.0).abs() < 0.01;
+      final tolerance = (_members.isEmpty ? 0.01 : 0.01 * _members.length);
+      return (totalPercentage - 100.0).abs() <= tolerance;
     }
-    
+
     final total = _getTotalSplit();
     return (total - widget.amount).abs() < 0.01;
   }
