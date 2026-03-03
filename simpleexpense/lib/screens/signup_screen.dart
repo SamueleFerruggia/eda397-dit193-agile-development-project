@@ -49,9 +49,10 @@ class _SignupScreenState extends State<SignupScreen> {
       if (!mounted) return;
 
       if (error == null) {
-        // Success - navigate directly to Home Screen
-        Navigator.of(context).pushReplacement(
+        // Success - replace entire stack so user cannot navigate back to login/signup
+        Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const HomeScreen()),
+          (route) => false,
         );
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Account created successfully!')),
