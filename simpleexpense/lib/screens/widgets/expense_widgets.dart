@@ -114,8 +114,6 @@ class ExpenseHeaderWidget extends StatelessWidget {
                   },
                   tooltip: 'Export',
                 ),
-              // Manage Invitations button (admin only)
-              if (isAdmin)
                 IconButton(
                   icon: const Icon(
                     Icons.people_outline,
@@ -125,12 +123,10 @@ class ExpenseHeaderWidget extends StatelessWidget {
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) =>
-                            const InvitationManagementScreen(),
+                        builder: (context) => const InvitationManagementScreen(),
                       ),
                     );
                   },
-                  tooltip: 'Manage Invitations',
                 ),
               const SizedBox(width: 8),
               // Share invite code
