@@ -10,13 +10,17 @@ class AuthService {
   User? get currentUser => _auth.currentUser;
 
   // Sign Up
-  Future<User?> signUp({required String email, required String password, required String name}) async {
+  Future<User?> signUp({
+    required String email,
+    required String password,
+    required String name,
+  }) async {
     try {
       UserCredential result = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-      
+
       User? user = result.user;
       // Update immediately the Display Name of Firebase Auth
       await user?.updateDisplayName(name);
@@ -27,7 +31,10 @@ class AuthService {
   }
 
   // Sign In
-  Future<User?> signIn({required String email, required String password}) async {
+  Future<User?> signIn({
+    required String email,
+    required String password,
+  }) async {
     try {
       UserCredential result = await _auth.signInWithEmailAndPassword(
         email: email,

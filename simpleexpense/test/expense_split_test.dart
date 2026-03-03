@@ -184,14 +184,21 @@ Map<String, double> _amountsFromPercentages(
   );
 }
 
+/// Helper to compare two doubles at cent-level precision.
+bool _isApproximatelyEqual(double a, double b) {
+  final aCents = (a * 100).round();
+  final bCents = (b * 100).round();
+  return aCents == bCents;
+}
+
 /// Mirrors _isValidSplit (non-percentage branch) in ExpenseSplitScreen.
 bool _isValidSplitByAmount(double totalAmount, Map<String, double> splits) {
   final totalSplit = splits.values.fold<double>(0.0, (sum, v) => sum + v);
-  return (totalSplit - totalAmount).abs() < 0.01;
+  return _isApproximatelyEqual(totalSplit, totalAmount);
 }
 
 /// Mirrors _isValidSplit (percentage branch) in ExpenseSplitScreen.
 bool _isValidSplitByPercentage(Map<String, double> percentages) {
   final totalPct = percentages.values.fold<double>(0.0, (sum, v) => sum + v);
-  return (totalPct - 100.0).abs() < 0.01;
+  return _isApproximatelyEqual(totalPct, 100.0);
 }

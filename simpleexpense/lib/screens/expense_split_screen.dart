@@ -124,14 +124,20 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
     });
   }
 
+  bool _isApproximatelyEqual(double a, double b) {
+    final aCents = (a * 100).round();
+    final bCents = (b * 100).round();
+    return aCents == bCents;
+  }
+
   bool _isValidSplit() {
     if (_splitMode == 'Percentage') {
       final totalPercentage = _getTotalPercentage();
-      return (totalPercentage - 100.0).abs() < 0.01;
+      return _isApproximatelyEqual(totalPercentage, 100.0);
     }
 
     final total = _getTotalSplit();
-    return (total - widget.amount).abs() < 0.01;
+    return _isApproximatelyEqual(total, widget.amount);
   }
 
   void _handleSave() async {

@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import '../models/models.dart';
 
 class FirestoreService {
@@ -85,7 +87,7 @@ class FirestoreService {
 
       return members;
     } catch (e) {
-      print('Error fetching group members: $e');
+      debugPrint('Error fetching group members: $e');
       return [];
     }
   }
@@ -112,8 +114,26 @@ class FirestoreService {
       throw Exception('You are already a member of this group.');
     }
 
+    // Ensure user document exists before adding to group
+    final userDoc = await _db.collection('users').doc(uid).get();
+    if (!userDoc.exists) {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await saveUser(uid, user.email ?? '', user.displayName ?? 'User');
+      }
+    }
+
     await _db.collection('groups').doc(groupId).update({
       'members': FieldValue.arrayUnion([uid]),
+    });
+  }
+
+  Future<void> removeMemberFromGroup({
+    required String groupId,
+    required String memberId,
+  }) async {
+    await _db.collection('groups').doc(groupId).update({
+      'members': FieldValue.arrayRemove([memberId]),
     });
   }
 
@@ -163,7 +183,7 @@ class FirestoreService {
           .map((doc) => GroupInvitation.fromFirestore(doc))
           .toList();
     } catch (e) {
-      print('Error fetching group invitations: $e');
+      debugPrint('Error fetching group invitations: $e');
       return [];
     }
   }
@@ -203,7 +223,7 @@ class FirestoreService {
           .where((inv) => !inv.isExpired)
           .toList();
     } catch (e) {
-      print('Error fetching pending invitations: $e');
+      debugPrint('Error fetching pending invitations: $e');
       return [];
     }
   }
@@ -289,7 +309,7 @@ class FirestoreService {
 
       return invitation;
     } catch (e) {
-      print('Error fetching invitation by code: $e');
+      debugPrint('Error fetching invitation by code: $e');
       return null;
     }
   }
@@ -308,7 +328,7 @@ class FirestoreService {
           .where((inv) => !inv.isExpired)
           .length;
     } catch (e) {
-      print('Error counting pending invitations: $e');
+      debugPrint('Error counting pending invitations: $e');
       return 0;
     }
   }

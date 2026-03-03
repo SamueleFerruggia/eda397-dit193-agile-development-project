@@ -1,0 +1,8 @@
+Analyzing simpleexpense...                                      
+
+   info - The parameter name 'sum' matches a visible type name - lib\screens\widgets\expense_widgets.dart:273:20 - avoid_types_as_parameter_names
+   info - Unnecessary use of string interpolation - lib\screens\widgets\expense_widgets.dart:371:19 - unnecessary_string_interpolations
+   info - The import of 'package:cross_file/cross_file.dart' is unnecessary because all of the used elements are also provided by the import of 'package:share_plus/share_plus.dart' - lib\services\expense_csv_export.dart:5:8 - unnecessary_import
+   info - Use a function declaration rather than a variable assignment to bind a function to a name - lib\services\expense_pdf_export.dart:20:9 - prefer_function_declarations_over_variables
+   info - Use a function declaration rather than a variable assignment to bind a function to a name - lib\services\expense_pdf_export.dart:22:9 - prefer_function_declarations_over_variables
+

@@ -67,8 +67,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   );
 
+                  if (!context.mounted) return;
+
+                  if (!context.mounted) return;
+
                   if (confirm == true) {
                     await authProvider.logout();
+
+                    if (!context.mounted) return;
+
+                    if (!context.mounted) return;
+
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
                         builder: (context) => const LoginScreen(),
@@ -119,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.3),
+                          color: Colors.white.withValues(alpha: 0.3),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -155,7 +164,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
-                      color: AppTheme.primary.withOpacity(0.3),
+                      color: AppTheme.primary.withValues(alpha: 0.3),
                       width: 2,
                     ),
                   ),
@@ -175,11 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       const SizedBox(height: 48),
-                      Icon(
-                        Icons.groups,
-                        size: 180,
-                        color: AppTheme.primary,
-                      ),
+                      Icon(Icons.groups, size: 180, color: AppTheme.primary),
                       const Spacer(),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -325,18 +330,18 @@ class _HomeScreenState extends State<HomeScreen> {
         // Bottom Bar
         Container(
           color: AppTheme.background,
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           child: Row(
             children: [
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
+                    horizontal: 14,
+                    vertical: 2,
                   ),
                   decoration: BoxDecoration(
                     color: AppTheme.primary,
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: DropdownButton<String>(
                     value: 'Group',
@@ -381,7 +386,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               GestureDetector(
                 onTap: () {
                   Navigator.of(context).push(
@@ -389,22 +394,26 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 },
                 child: Container(
-                  width: 56,
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  width: 52,
+                  padding: const EdgeInsets.symmetric(vertical: 6),
                   decoration: BoxDecoration(
                     color: AppTheme.primary,
-                    borderRadius: BorderRadius.circular(28),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.group_add, color: Colors.white, size: 24),
-                      const SizedBox(height: 2),
+                      const Icon(
+                        Icons.group_add,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      const SizedBox(height: 1),
                       const Text(
                         'Join',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 10,
                           fontWeight: FontWeight.w500,
                           color: AppTheme.textLight,
                         ),
@@ -413,7 +422,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               GestureDetector(
                 onTap: () {
                   Navigator.of(
@@ -421,22 +430,22 @@ class _HomeScreenState extends State<HomeScreen> {
                   ).push(MaterialPageRoute(builder: (_) => CreateGroupStep1()));
                 },
                 child: Container(
-                  width: 56,
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  width: 52,
+                  padding: const EdgeInsets.symmetric(vertical: 6),
                   decoration: BoxDecoration(
                     color: AppTheme.primary,
-                    borderRadius: BorderRadius.circular(28),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.add, color: Colors.white, size: 24),
-                      const SizedBox(height: 2),
+                      const Icon(Icons.add, color: Colors.white, size: 20),
+                      const SizedBox(height: 1),
                       const Text(
                         'Group',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 10,
                           fontWeight: FontWeight.w500,
                           color: AppTheme.textLight,
                         ),
@@ -477,54 +486,143 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding: const EdgeInsets.all(0),
                   itemCount: groups.length,
                   itemBuilder: (context, index) {
-              final group = groups[index];
-              // UPDATED: Using Model properties instead of Map keys
-              final name = group.name;
-              final currency = group.currency;
-              final groupId = group.id;
+                    final group = groups[index];
+                    final name = group.name;
+                    final currency = group.currency;
+                    final groupId = group.id;
 
-              return Consumer<AuthProvider>(
-                builder: (context, authProvider, _) {
-                  final currentUserId = authProvider.currentUserId;
-                  
-                  return StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('groups')
-                        .doc(groupId)
-                        .collection('expenses')
-                        .snapshots(),
-                    builder: (context, expenseSnapshot) {
-                      Color cardColor = Colors.grey.shade300;
-                      
-                      if (expenseSnapshot.hasData && currentUserId != null) {
-                        final expenses = expenseSnapshot.data!.docs
-                            .map((doc) => Expense.fromFirestore(doc))
-                            .toList();
-                        
-                        final firestoreService = FirestoreService();
-                        final balanceService = BalanceService();
-                        
-                        // We need to use FutureBuilder for members
-                        return FutureBuilder<List<GroupMember>>(
-                          future: firestoreService.getGroupMembers(groupId),
-                          builder: (context, memberSnapshot) {
-                            if (memberSnapshot.hasData) {
-                              final members = memberSnapshot.data!;
-                              final balances = balanceService.calculateNetBalances(expenses, members);
-                              final myBalance = balances[currentUserId] ?? 0.0;
-                              
-                              if (myBalance > 0.01) {
-                                cardColor = Colors.green.shade400;
-                              } else if (myBalance < -0.01) {
-                                cardColor = Colors.red.shade400;
-                              }
+                    return Consumer<AuthProvider>(
+                      builder: (context, authProvider, _) {
+                        final currentUserId = authProvider.currentUserId;
+                        return StreamBuilder<QuerySnapshot>(
+                          stream: FirebaseFirestore.instance
+                              .collection('groups')
+                              .doc(groupId)
+                              .collection('expenses')
+                              .snapshots(),
+                          builder: (context, expenseSnapshot) {
+                            Color cardColor = Colors.grey.shade300;
+                            if (expenseSnapshot.hasData &&
+                                currentUserId != null) {
+                              final expenses = expenseSnapshot.data!.docs
+                                  .map((doc) => Expense.fromFirestore(doc))
+                                  .toList();
+                              final firestoreService = FirestoreService();
+                              final balanceService = BalanceService();
+                              return FutureBuilder<List<GroupMember>>(
+                                future: firestoreService.getGroupMembers(
+                                  groupId,
+                                ),
+                                builder: (context, memberSnapshot) {
+                                  if (memberSnapshot.hasData) {
+                                    final members = memberSnapshot.data!;
+                                    final balances = balanceService
+                                        .calculateNetBalances(
+                                          expenses,
+                                          members,
+                                        );
+                                    final myBalance =
+                                        balances[currentUserId] ?? 0.0;
+                                    if (myBalance > 0.01) {
+                                      cardColor = Colors.green.shade400;
+                                    } else if (myBalance < -0.01) {
+                                      cardColor = Colors.red.shade400;
+                                    }
+                                  }
+                                  return GestureDetector(
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => GroupDashboardScreen(
+                                            groupId: groupId,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: Container(
+                                      margin: const EdgeInsets.symmetric(
+                                        vertical: 8,
+                                        horizontal: 16,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(6),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(
+                                              alpha: 0.06,
+                                            ),
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 1),
+                                          ),
+                                        ],
+                                      ),
+                                      child: IntrinsicHeight(
+                                        child: Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.stretch,
+                                          children: [
+                                            Container(
+                                              width: 64,
+                                              decoration: BoxDecoration(
+                                                color: cardColor,
+                                                borderRadius:
+                                                    const BorderRadius.horizontal(
+                                                      left: Radius.circular(2),
+                                                    ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 14),
+                                            Expanded(
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 14,
+                                                    ),
+                                                child: Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Text(
+                                                      name,
+                                                      style: const TextStyle(
+                                                        fontSize: 17,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Color(
+                                                          0xFF333333,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 6),
+                                                    GroupBalanceStatusWidget(
+                                                      groupId: groupId,
+                                                      currency: currency,
+                                                      groupName: name,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 16),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
                             }
-                            
                             return GestureDetector(
                               onTap: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
-                                    builder: (_) => GroupDashboardScreen(groupId: groupId),
+                                    builder: (_) =>
+                                        GroupDashboardScreen(groupId: groupId),
                                   ),
                                 );
                               },
@@ -538,7 +636,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   borderRadius: BorderRadius.circular(6),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.06),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.06,
+                                      ),
                                       blurRadius: 4,
                                       offset: const Offset(0, 1),
                                     ),
@@ -546,24 +646,30 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                                 child: IntrinsicHeight(
                                   child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
                                     children: [
                                       Container(
                                         width: 64,
                                         decoration: BoxDecoration(
                                           color: cardColor,
-                                          borderRadius: const BorderRadius.horizontal(
-                                            left: Radius.circular(2),
-                                          ),
+                                          borderRadius:
+                                              const BorderRadius.horizontal(
+                                                left: Radius.circular(2),
+                                              ),
                                         ),
                                       ),
                                       const SizedBox(width: 14),
                                       Expanded(
                                         child: Padding(
-                                          padding: const EdgeInsets.symmetric(vertical: 14),
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 14,
+                                          ),
                                           child: Column(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Text(
@@ -592,84 +698,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             );
                           },
                         );
-                      }
-                      
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => GroupDashboardScreen(groupId: groupId),
-                            ),
-                          );
-                        },
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(
-                            vertical: 8,
-                            horizontal: 16,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(6),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.06),
-                                blurRadius: 4,
-                                offset: const Offset(0, 1),
-                              ),
-                            ],
-                          ),
-                          child: IntrinsicHeight(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Container(
-                                  width: 64,
-                                  decoration: BoxDecoration(
-                                    color: cardColor,
-                                    borderRadius: const BorderRadius.horizontal(
-                                      left: Radius.circular(2),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 14),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          name,
-                                          style: const TextStyle(
-                                            fontSize: 17,
-                                            fontWeight: FontWeight.bold,
-                                            color: Color(0xFF333333),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        GroupBalanceStatusWidget(
-                                          groupId: groupId,
-                                          currency: currency,
-                                          groupName: name,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              );
-            },
-          ),
+                      },
+                    );
+                  },
+                ),
               ),
             ],
           ),
