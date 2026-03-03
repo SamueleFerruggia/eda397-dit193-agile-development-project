@@ -125,7 +125,12 @@ class FirestoreService {
     if (!userDoc.exists) {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        await saveUser(uid, user.email ?? '', user.displayName ?? 'User');
+        await saveUser(
+          uid,
+          user.email ?? '',
+          user.displayName ?? 'User',
+          user.phoneNumber ?? '',
+        );
       }
     }
 
