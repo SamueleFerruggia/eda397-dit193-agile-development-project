@@ -52,7 +52,12 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // Signup
-  Future<String?> signUp(String email, String password, String name) async {
+  Future<String?> signUp(
+    String email,
+    String password,
+    String name,
+    String phoneNumber,
+  ) async {
     _setLoading(true);
     try {
       // 1. Create Auth User
@@ -64,7 +69,7 @@ class AuthProvider extends ChangeNotifier {
 
       // 2. If Auth ok, save in Database
       if (user != null) {
-        await _firestoreService.saveUser(user.uid, email, name);
+        await _firestoreService.saveUser(user.uid, email, name, phoneNumber);
       }
 
       _setLoading(false);

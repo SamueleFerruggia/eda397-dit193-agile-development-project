@@ -149,7 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
             // Empty State Card
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.all(12.0),
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -168,14 +168,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontFamily: AppTheme.fontFamilyDisplay,
-                          fontSize: 32,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                           height: 1.2,
                         ),
                       ),
-                      const SizedBox(height: 48),
-                      Icon(Icons.groups, size: 180, color: AppTheme.primary),
+                      const SizedBox(height: 12),
+                      Icon(Icons.groups, size: 60, color: AppTheme.primary),
                       const Spacer(),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 32),
