@@ -8,11 +8,17 @@ class FirestoreService {
 
   // --- USERS ---
 
-  Future<void> saveUser(String uid, String email, String name) async {
+  Future<void> saveUser(
+    String uid,
+    String email,
+    String name,
+    String phoneNumber,
+  ) async {
     await _db.collection('users').doc(uid).set({
       'userId': uid,
       'email': email,
       'name': name,
+      'phoneNumber': phoneNumber,
       'createdAt': FieldValue.serverTimestamp(),
     });
   }
@@ -51,9 +57,8 @@ class FirestoreService {
         .where('members', arrayContains: uid)
         .snapshots()
         .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => Group.fromFirestore(doc))
-              .toList(),
+          (snapshot) =>
+              snapshot.docs.map((doc) => Group.fromFirestore(doc)).toList(),
         );
   }
 
@@ -151,7 +156,7 @@ class FirestoreService {
     int? expiryDays,
   }) async {
     final invitationRef = _db.collection('invitations').doc();
-    
+
     final expiresAt = expiryDays != null
         ? DateTime.now().add(Duration(days: expiryDays))
         : null;
@@ -199,17 +204,19 @@ class FirestoreService {
           final invitations = snapshot.docs
               .map((doc) => GroupInvitation.fromFirestore(doc))
               .toList();
-          
+
           // Sort in memory instead of using Firestore orderBy
           // This avoids the need for a composite index
           invitations.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-          
+
           return invitations;
         });
   }
 
   /// Get pending invitations for a specific email
-  Future<List<GroupInvitation>> getPendingInvitationsForEmail(String email) async {
+  Future<List<GroupInvitation>> getPendingInvitationsForEmail(
+    String email,
+  ) async {
     try {
       final snapshot = await _db
           .collection('invitations')
@@ -232,14 +239,17 @@ class FirestoreService {
     required String invitationId,
     required String userId,
   }) async {
-    final invitationDoc = await _db.collection('invitations').doc(invitationId).get();
-    
+    final invitationDoc = await _db
+        .collection('invitations')
+        .doc(invitationId)
+        .get();
+
     if (!invitationDoc.exists) {
       throw Exception('Invitation not found');
     }
 
     final invitation = GroupInvitation.fromFirestore(invitationDoc);
-    
+
     if (invitation.status != InvitationStatus.pending) {
       throw Exception('Invitation is no longer valid');
     }
@@ -294,7 +304,7 @@ class FirestoreService {
       if (snapshot.docs.isEmpty) return null;
 
       final invitation = GroupInvitation.fromFirestore(snapshot.docs.first);
-      
+
       if (invitation.isExpired) {
         // Mark as expired
         await _db.collection('invitations').doc(invitation.id).update({

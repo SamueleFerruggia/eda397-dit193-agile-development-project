@@ -6,12 +6,14 @@ class AppUser {
   final String uid;
   final String email;
   final String name;
+  final String phoneNumber;
   final DateTime createdAt;
 
   AppUser({
     required this.uid,
     required this.email,
     required this.name,
+    required this.phoneNumber,
     required this.createdAt,
   });
 
@@ -21,6 +23,7 @@ class AppUser {
       uid: doc.id,
       email: data['email'] ?? '',
       name: data['name'] ?? '',
+      phoneNumber: data['phoneNumber'] ?? '',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
@@ -29,6 +32,7 @@ class AppUser {
     return {
       'email': email,
       'name': name,
+      'phoneNumber': phoneNumber,
       'createdAt': Timestamp.fromDate(createdAt),
     };
   }
@@ -139,14 +143,14 @@ class Expense {
 
   factory Expense.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    
+
     // Handle both old format (splitWith as list) and new format (splitAmounts as map)
     Map<String, double> splitAmounts = {};
     if (data['splitAmounts'] != null) {
       // New format
       final rawSplitAmounts = data['splitAmounts'] as Map<String, dynamic>;
-      splitAmounts = rawSplitAmounts.map((key, value) => 
-        MapEntry(key, (value as num?)?.toDouble() ?? 0.0)
+      splitAmounts = rawSplitAmounts.map(
+        (key, value) => MapEntry(key, (value as num?)?.toDouble() ?? 0.0),
       );
     } else if (data['splitWith'] != null) {
       // Legacy format - convert to equal split
@@ -158,7 +162,7 @@ class Expense {
         splitAmounts[uid] = splitAmount;
       }
     }
-    
+
     return Expense(
       id: doc.id,
       groupId: data['groupId'] ?? '',
@@ -308,7 +312,9 @@ class GroupInvitation {
       'status': status.value,
       'createdAt': Timestamp.fromDate(createdAt),
       'expiresAt': expiresAt != null ? Timestamp.fromDate(expiresAt!) : null,
-      'respondedAt': respondedAt != null ? Timestamp.fromDate(respondedAt!) : null,
+      'respondedAt': respondedAt != null
+          ? Timestamp.fromDate(respondedAt!)
+          : null,
     };
   }
 
