@@ -130,7 +130,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         height: 48,
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.3),
-                          color: Colors.white.withValues(alpha: 0.3),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -166,7 +165,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
-                      color: AppTheme.primary.withValues(alpha:0.3),
                       color: AppTheme.primary.withValues(alpha:0.3),
                       width: 2,
                     ),
