@@ -430,7 +430,6 @@ class FirestoreService {
     for (final doc in expensesSnapshot.docs) {
       final data = doc.data();
       final payerId = data['payerId'] as String? ?? '';
-      if (data['isSettlement'] == true) continue;
 
       Map<String, double> splits = {};
       if (data['splitAmounts'] != null) {
@@ -496,9 +495,6 @@ class FirestoreService {
     for (final doc in expensesSnapshot.docs) {
       final data = doc.data();
       final payerId = data['payerId'] as String? ?? '';
-
-      // Skip existing settlement expenses for this pair to avoid loops
-      if (data['isSettlement'] == true) continue;
 
       // Build split map from whichever format is present
       Map<String, double> splits = {};
