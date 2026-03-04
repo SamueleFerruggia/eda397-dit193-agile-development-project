@@ -2,7 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../models/models.dart';
-
+import '../models/settle_request.dart';
+  
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
@@ -577,5 +578,58 @@ class FirestoreService {
 
       return docs;
     });
+  }
+
+  // --- SETTLE REQUESTS ---
+
+  Future<void> createSettleRequest({
+    required String groupId,
+    required String fromUserId,
+    required String toUserId,
+    required double amount,
+    required String expenseId,
+  }) async {
+    await _db.collection('settleRequests').add({
+      'groupId': groupId,
+      'fromUserId': fromUserId,
+      'toUserId': toUserId,
+      'amount': amount,
+      'expenseId': expenseId,
+      'status': 'pending',
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Stream<List<SettleRequest>> streamSettleRequestsForUser(String userId) {
+    return _db
+        .collection('settleRequests')
+        .where('toUserId', isEqualTo: userId)
+        .where('status', isEqualTo: 'pending')
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => SettleRequest.fromFirestore(doc))
+            .toList());
+  }
+
+  Future<void> updateSettleRequestStatus(String requestId, String status) async {
+    await FirebaseFirestore.instance
+        .collection('settleRequests')
+        .doc(requestId)
+        .update({
+          'status': status,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+  }
+
+  Stream<List<SettleRequest>> streamSettleRequestsForGroup(String groupId) {
+    return _db
+        .collection('settleRequests')
+        .where('groupId', isEqualTo: groupId)
+        .where('status', isEqualTo: 'pending')
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => SettleRequest.fromFirestore(doc))
+            .toList());
   }
 }
