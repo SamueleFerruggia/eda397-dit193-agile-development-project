@@ -17,9 +17,9 @@ Future<bool> exportExpensesToPdf({
   if (expenses.isEmpty) return false;
 
   final pdf = pw.Document();
-  final dateStr = (DateTime e) =>
+  String dateStr(DateTime e) =>
       '${e.year}-${e.month.toString().padLeft(2, '0')}-${e.day.toString().padLeft(2, '0')}';
-  final timeStr = (DateTime e) =>
+  String timeStr(DateTime e) =>
       '${e.hour.toString().padLeft(2, '0')}:${e.minute.toString().padLeft(2, '0')}';
 
   final headers = ['Date', 'Time', 'Description', 'Amount', 'Paid by', 'Split'];
