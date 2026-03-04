@@ -77,11 +77,14 @@ class _BalanceScreenState extends State<BalanceScreen> {
                               children: [
                                 ElevatedButton(
                                   onPressed: () async {
+                                    // First mark the request as accepted
                                     await _firestoreService.updateSettleRequestStatus(req.id, 'accepted');
                                     if (!mounted) return;
-                                    innerSetState(() => dismissed = true);
                                     // Execute the actual balance settlement
                                     await _executeSettlement(req.fromUserId, req.toUserId);
+                                    if (!mounted) return;
+                                    // Dismiss the card after settlement completes
+                                    innerSetState(() => dismissed = true);
                                   },
                                   child: const Text('Approve'),
                                 ),
@@ -206,7 +209,6 @@ class _BalanceScreenState extends State<BalanceScreen> {
 
             final members = memberSnapshot.data!;
             final balances = _balanceService.calculateNetBalances(expenses, members);
-            final settlements = _balanceService.calculateSettlements(balances);
             // Only consider balances for current group members
             final allSettled = members.every((m) => (balances[m.uid] ?? 0).abs() < 0.01);
             final currentUserId = context.read<AuthProvider>().currentUserId;
@@ -250,12 +252,6 @@ class _BalanceScreenState extends State<BalanceScreen> {
                         );
                     },
                   ),
-                  const SizedBox(height: 24),
-                  _buildSectionTitle('Suggested Settlements'),
-                  const SizedBox(height: 12),
-                  settlements.isEmpty
-                      ? _buildAllSettledCard()
-                      : _buildSettlementsList(settlements, members, currency),
                   const SizedBox(height: 24),
                   // Link to archived settlements
                   Center(
@@ -441,170 +437,6 @@ class _BalanceScreenState extends State<BalanceScreen> {
     );
   }
 
-  Widget _buildSettlementsList(
-    List<Settlement> settlements,
-    List<GroupMember> members,
-    String currency,
-  ) {
-    final currentUserId = context.read<AuthProvider>().currentUserId;
-
-    return Column(
-      children: settlements.map((settlement) {
-        final fromMember = members.firstWhere(
-          (m) => m.uid == settlement.fromUserId,
-          orElse: () => GroupMember(
-            uid: settlement.fromUserId,
-            name: 'Unknown',
-            email: '',
-          ),
-        );
-        final toMember = members.firstWhere(
-          (m) => m.uid == settlement.toUserId,
-          orElse: () => GroupMember(
-            uid: settlement.toUserId,
-            name: 'Unknown',
-            email: '',
-          ),
-        );
-
-        final isUserInvolved = settlement.fromUserId == currentUserId ||
-            settlement.toUserId == currentUserId;
-
-        return _buildSettlementCard(
-          fromMember.name,
-          toMember.name,
-          settlement.amount,
-          currency,
-          isUserInvolved,
-          settlement.fromUserId == currentUserId,
-          settlement.fromUserId,
-          settlement.toUserId,
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildSettlementCard(
-    String fromName,
-    String toName,
-    double amount,
-    String currency,
-    bool isUserInvolved,
-    bool isUserPaying,
-    String fromUserId,
-    String toUserId,
-  ) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isUserInvolved ? Colors.blue.shade50 : Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isUserInvolved ? Colors.blue.shade200 : Colors.grey.shade200,
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      isUserPaying ? 'You' : fromName,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.textDark,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Icon(
-                      Icons.arrow_forward,
-                      size: 16,
-                      color: AppTheme.secondaryDark,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      isUserPaying ? toName : (isUserInvolved ? 'You' : toName),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.textDark,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${amount.toStringAsFixed(2)} $currency',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (isUserInvolved)
-            ElevatedButton(
-              onPressed: () {
-                _showSettleUpDialog(
-                  fromName, toName, amount, currency, fromUserId, toUserId,
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-              ),
-              child: const Text('Settle'),
-            ),
-        ],
-      ),
-    );
-  }
-
-  void _showSettleUpDialog(
-    String fromName,
-    String toName,
-    double amount,
-    String currency,
-    String fromUserId,
-    String toUserId,
-  ) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Settle Up'),
-        content: Text(
-          'Record that $fromName paid $toName ${amount.toStringAsFixed(2)} $currency?\n\n'
-          'This will archive the shared expenses between these two users and reset their balance.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(dialogContext);
-              await _executeSettlement(fromUserId, toUserId);
-            },
-            child: const Text('Confirm'),
-          ),
-        ],
-      ),
-    );
-  }
-
   /// Execute the settlement via the provider and show feedback
   Future<void> _executeSettlement(String userA, String userB) async {
     final groupsProvider = context.read<GroupsProvider>();
@@ -646,152 +478,4 @@ class _BalanceScreenState extends State<BalanceScreen> {
     }
   }
 
-  // TEMP DEBUG FEATURE – REMOVE BEFORE PRODUCTION
-  /// Shows a dialog listing all suggested settlements and lets the developer
-  /// force-trigger any of them without the real voting flow.
-  /// When no settlements exist, allows picking any two members to settle.
-  void _showDebugSettleDialog(
-    List<Settlement> settlements,
-    List<GroupMember> members,
-    String currency,
-  ) {
-    if (settlements.isNotEmpty) {
-      // Show suggested settlements
-      showDialog(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('DEBUG: Force Settlement'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: settlements.length,
-              itemBuilder: (_, i) {
-                final s = settlements[i];
-                final from = members
-                    .firstWhere(
-                      (m) => m.uid == s.fromUserId,
-                      orElse: () =>
-                          GroupMember(uid: s.fromUserId, name: 'Unknown', email: ''),
-                    )
-                    .name;
-                final to = members
-                    .firstWhere(
-                      (m) => m.uid == s.toUserId,
-                      orElse: () =>
-                          GroupMember(uid: s.toUserId, name: 'Unknown', email: ''),
-                    )
-                    .name;
-                return ListTile(
-                  title: Text('$from → $to'),
-                  subtitle: Text('${s.amount.toStringAsFixed(2)} $currency'),
-                  trailing: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(dialogContext);
-                      _executeSettlement(s.fromUserId, s.toUserId);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text('Settle'),
-                  ),
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Close'),
-            ),
-          ],
-        ),
-      );
-    } else {
-      // No settlements — let dev pick any two members
-      _showDebugPickMembersDialog(members);
-    }
-  }
-
-  /// When balances are already zero but expenses exist, let the developer
-  /// pick two members to force-archive their shared expenses.
-  void _showDebugPickMembersDialog(List<GroupMember> members) {
-    if (members.length < 2) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Need at least 2 members to settle.')),
-      );
-      return;
-    }
-
-    String? selectedA;
-    String? selectedB;
-
-    showDialog(
-      context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (dialogContext, setDialogState) {
-          return AlertDialog(
-            title: const Text('DEBUG: Pick Two Members'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'No outstanding settlements. Pick any two members to '
-                  'archive their shared expenses.',
-                  style: TextStyle(fontSize: 13),
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: 'Member A'),
-                  value: selectedA,
-                  items: members
-                      .map((m) => DropdownMenuItem(
-                            value: m.uid,
-                            child: Text(m.name),
-                          ))
-                      .toList(),
-                  onChanged: (v) => setDialogState(() => selectedA = v),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: 'Member B'),
-                  value: selectedB,
-                  items: members
-                      .where((m) => m.uid != selectedA)
-                      .map((m) => DropdownMenuItem(
-                            value: m.uid,
-                            child: Text(m.name),
-                          ))
-                      .toList(),
-                  onChanged: (v) => setDialogState(() => selectedB = v),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: (selectedA != null && selectedB != null)
-                    ? () {
-                        Navigator.pop(dialogContext);
-                        _executeSettlement(selectedA!, selectedB!);
-                      }
-                    : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text('Force Settle'),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-  // END TEMP DEBUG FEATURE
 }

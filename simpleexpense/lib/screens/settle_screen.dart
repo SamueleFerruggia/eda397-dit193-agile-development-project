@@ -16,9 +16,11 @@ class SettleScreen extends StatefulWidget {
 class _SettleScreenState extends State<SettleScreen> {
   String? _selectedUserId;
   bool _isSubmitting = false;
+  bool _isLoadingDebt = false;
   String? _infoMessage;
   double _amount = 0.0;
-  String? _expenseId;
+  String? _debtorId;
+  final FirestoreService _firestoreService = FirestoreService();
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +30,7 @@ class _SettleScreenState extends State<SettleScreen> {
         title: const Text('Settle Up'),
       ),
       body: FutureBuilder<List<GroupMember>>(
-        future: FirestoreService().getGroupMembers(widget.groupId),
+        future: _firestoreService.getGroupMembers(widget.groupId),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
@@ -39,10 +41,12 @@ class _SettleScreenState extends State<SettleScreen> {
           if (members.isEmpty) {
             return const Center(child: Text('No other members to settle with.'));
           }
-          final selectedMember = members.firstWhere(
-            (m) => m.uid == _selectedUserId,
-            orElse: () => members.first,
-          );
+          final selectedMember = _selectedUserId != null
+              ? members.firstWhere(
+                  (m) => m.uid == _selectedUserId,
+                  orElse: () => members.first,
+                )
+              : null;
           return Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -63,29 +67,58 @@ class _SettleScreenState extends State<SettleScreen> {
                       child: Text(member.name),
                     );
                   }).toList(),
-                  onChanged: (value) {
+                  onChanged: (value) async {
                     setState(() {
                       _selectedUserId = value;
-                      // For demo, just set amount and expenseId to dummy values
-                      _amount = 10.0;
-                      _expenseId = '';
+                      _isLoadingDebt = true;
+                      _amount = 0.0;
+                      _debtorId = null;
+                      _infoMessage = null;
                     });
+                    if (value != null && currentUserId != null) {
+                      final debt = await _firestoreService.getPairwiseDebt(
+                        groupId: widget.groupId,
+                        userA: currentUserId,
+                        userB: value,
+                      );
+                      if (mounted) {
+                        setState(() {
+                          _amount = (debt['amount'] as num).toDouble();
+                          _debtorId = debt['debtorId'] as String;
+                          _isLoadingDebt = false;
+                        });
+                      }
+                    }
                   },
                 ),
-                if (_selectedUserId != null) ...[
+                if (_isLoadingDebt) ...[
                   const SizedBox(height: 16),
-                  Text(
-                    'You will pay ${selectedMember.name} ${_amount.toStringAsFixed(2)} SEK.',
-                    style: const TextStyle(fontSize: 16, color: Colors.blue),
-                  ),
+                  const Center(child: CircularProgressIndicator()),
+                ] else if (_selectedUserId != null && selectedMember != null) ...[
+                  const SizedBox(height: 16),
+                  if (_amount < 0.01)
+                    Text(
+                      'You and ${selectedMember.name} are already settled up!',
+                      style: const TextStyle(fontSize: 16, color: Colors.green),
+                    )
+                  else if (_debtorId == currentUserId)
+                    Text(
+                      'You owe ${selectedMember.name} ${_amount.toStringAsFixed(2)} SEK.',
+                      style: const TextStyle(fontSize: 16, color: Colors.red),
+                    )
+                  else
+                    Text(
+                      '${selectedMember.name} owes you ${_amount.toStringAsFixed(2)} SEK.',
+                      style: const TextStyle(fontSize: 16, color: Colors.blue),
+                    ),
                 ],
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
-                  onPressed: _selectedUserId == null || _isSubmitting
+                  onPressed: _selectedUserId == null || _isSubmitting || _amount < 0.01
                       ? null
                       : _onSettlePressed,
                   icon: const Icon(Icons.handshake),
-                  label: const Text('Settle'),
+                  label: const Text('Send Settlement Request'),
                 ),
                 if (_infoMessage != null) ...[
                   const SizedBox(height: 24),
@@ -108,15 +141,12 @@ class _SettleScreenState extends State<SettleScreen> {
       _infoMessage = null;
     });
     final currentUserId = context.read<AuthProvider>().currentUserId;
-    // For demo, just use dummy amount and expenseId
-    double amount = _amount > 0 ? _amount : 1.0;
-    String expenseId = _expenseId ?? '';
-    await FirestoreService().createSettleRequest(
+    await _firestoreService.createSettleRequest(
       groupId: widget.groupId,
       fromUserId: currentUserId!,
       toUserId: _selectedUserId!,
-      amount: amount,
-      expenseId: expenseId,
+      amount: _amount,
+      expenseId: '',
     );
     setState(() {
       _isSubmitting = false;

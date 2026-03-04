@@ -410,6 +410,64 @@ class FirestoreService {
 
   // --- SETTLEMENT ---
 
+  /// Calculate the pairwise debt between two users without creating any records.
+  /// Returns a map: {amount: double, debtorId: String, creditorId: String}
+  /// If balance is zero, amount will be 0.0.
+  Future<Map<String, dynamic>> getPairwiseDebt({
+    required String groupId,
+    required String userA,
+    required String userB,
+  }) async {
+    final expensesSnapshot = await _db
+        .collection('groups')
+        .doc(groupId)
+        .collection('expenses')
+        .get();
+
+    double debtBtoA = 0;
+    double debtAtoB = 0;
+
+    for (final doc in expensesSnapshot.docs) {
+      final data = doc.data();
+      final payerId = data['payerId'] as String? ?? '';
+      if (data['isSettlement'] == true) continue;
+
+      Map<String, double> splits = {};
+      if (data['splitAmounts'] != null) {
+        final raw = data['splitAmounts'] as Map<String, dynamic>;
+        splits = raw.map(
+          (k, v) => MapEntry(k, (v as num?)?.toDouble() ?? 0.0),
+        );
+      } else if (data['splitWith'] != null) {
+        final splitWith = List<String>.from(data['splitWith'] as List? ?? []);
+        final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+        if (splitWith.isNotEmpty) {
+          final perPerson = amount / splitWith.length;
+          for (final uid in splitWith) {
+            splits[uid] = perPerson;
+          }
+        }
+      }
+
+      if (payerId == userA && splits.containsKey(userB)) {
+        debtBtoA += splits[userB]!;
+      }
+      if (payerId == userB && splits.containsKey(userA)) {
+        debtAtoB += splits[userA]!;
+      }
+    }
+
+    final pairwiseDebt = debtBtoA - debtAtoB;
+    if (pairwiseDebt.abs() < 0.01) {
+      return {'amount': 0.0, 'debtorId': userA, 'creditorId': userB};
+    }
+    if (pairwiseDebt > 0) {
+      return {'amount': pairwiseDebt, 'debtorId': userB, 'creditorId': userA};
+    } else {
+      return {'amount': -pairwiseDebt, 'debtorId': userA, 'creditorId': userB};
+    }
+  }
+
   /// Settle the debt between two users by creating a settlement expense
   /// that offsets their pairwise balance. Original expenses are preserved.
   ///
