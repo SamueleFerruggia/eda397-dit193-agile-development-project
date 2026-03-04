@@ -124,6 +124,7 @@ class Expense {
   final String? receiptUrl;
   final DateTime timestamp;
   final DateTime? updatedAt;
+  final bool isSettlement;
 
   Expense({
     required this.id,
@@ -139,6 +140,7 @@ class Expense {
     this.receiptUrl,
     required this.timestamp,
     this.updatedAt,
+    this.isSettlement = false,
   });
 
   factory Expense.fromFirestore(DocumentSnapshot doc) {
@@ -177,6 +179,7 @@ class Expense {
       receiptUrl: data['receiptUrl'],
       timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
+      isSettlement: data['isSettlement'] == true,
     );
   }
 
@@ -223,6 +226,7 @@ class Expense {
     String? receiptUrl,
     DateTime? timestamp,
     DateTime? updatedAt,
+    bool? isSettlement,
   }) {
     return Expense(
       id: id ?? this.id,
@@ -238,6 +242,7 @@ class Expense {
       receiptUrl: receiptUrl ?? this.receiptUrl,
       timestamp: timestamp ?? this.timestamp,
       updatedAt: updatedAt ?? this.updatedAt,
+      isSettlement: isSettlement ?? this.isSettlement,
     );
   }
 

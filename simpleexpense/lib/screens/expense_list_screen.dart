@@ -214,6 +214,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
         // Convert Firestore documents to Expense objects
         List<Expense> expensesList = snapshot.data!.docs
             .map((doc) => Expense.fromFirestore(doc))
+            .where((expense) => !expense.isSettlement)
             .toList();
 
         // Apply search filter
