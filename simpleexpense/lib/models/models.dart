@@ -6,12 +6,14 @@ class AppUser {
   final String uid;
   final String email;
   final String name;
+  final String phoneNumber;
   final DateTime createdAt;
 
   AppUser({
     required this.uid,
     required this.email,
     required this.name,
+    required this.phoneNumber,
     required this.createdAt,
   });
 
@@ -21,6 +23,7 @@ class AppUser {
       uid: doc.id,
       email: data['email'] ?? '',
       name: data['name'] ?? '',
+      phoneNumber: data['phoneNumber'] ?? '',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
@@ -29,6 +32,7 @@ class AppUser {
     return {
       'email': email,
       'name': name,
+      'phoneNumber': phoneNumber,
       'createdAt': Timestamp.fromDate(createdAt),
     };
   }

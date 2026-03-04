@@ -8,11 +8,17 @@ class FirestoreService {
 
   // --- USERS ---
 
-  Future<void> saveUser(String uid, String email, String name) async {
+  Future<void> saveUser(
+    String uid,
+    String email,
+    String name,
+    String phoneNumber,
+  ) async {
     await _db.collection('users').doc(uid).set({
       'userId': uid,
       'email': email,
       'name': name,
+      'phoneNumber': phoneNumber,
       'createdAt': FieldValue.serverTimestamp(),
     });
   }
@@ -119,7 +125,12 @@ class FirestoreService {
     if (!userDoc.exists) {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        await saveUser(uid, user.email ?? '', user.displayName ?? 'User');
+        await saveUser(
+          uid,
+          user.email ?? '',
+          user.displayName ?? 'User',
+          user.phoneNumber ?? '',
+        );
       }
     }
 
