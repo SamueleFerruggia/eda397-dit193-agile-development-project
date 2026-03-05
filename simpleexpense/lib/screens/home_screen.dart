@@ -8,6 +8,7 @@ import 'package:simpleexpense/screens/widgets/expense_widgets.dart';
 import 'package:simpleexpense/theme/app_theme.dart';
 import 'create_group_step1.dart';
 import 'join_group_screen.dart';
+import 'notification_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:simpleexpense/services/balance_service.dart';
 import 'package:simpleexpense/services/firestore_service.dart';
@@ -43,6 +44,61 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         actions: [
+          Consumer<AuthProvider>(
+            builder: (context, authProvider, _) {
+              final userId = authProvider.currentUserId ?? '';
+              final unreadStream =
+                  FirestoreService().streamUserUnreadNotificationCount(userId);
+              return StreamBuilder<int>(
+                stream: unreadStream,
+                builder: (context, snapshot) {
+                  final unreadCount = snapshot.data ?? 0;
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.notifications_outlined,
+                            color: Colors.white),
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const NotificationScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      if (unreadCount > 0)
+                        Positioned(
+                          right: 6,
+                          top: 6,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            constraints: const BoxConstraints(
+                              minWidth: 18,
+                              minHeight: 18,
+                            ),
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Text(
+                              unreadCount > 99 ? '99+' : '$unreadCount',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
           Consumer<AuthProvider>(
             builder: (context, authProvider, child) {
               return IconButton(
