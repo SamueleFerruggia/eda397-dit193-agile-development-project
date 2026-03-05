@@ -147,7 +147,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: n.type == app_models.NotificationType.expense
+                              color:
+                                  n.type == app_models.NotificationType.expense
                                   ? AppTheme.primaryDark
                                   : AppTheme.secondaryDark,
                             ),
@@ -158,7 +159,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           _formatDate(n.createdAt),
                           style: TextStyle(
                             fontSize: 12,
-                            color: AppTheme.secondaryDark.withValues(alpha: 0.8),
+                            color: AppTheme.secondaryDark.withValues(
+                              alpha: 0.8,
+                            ),
                           ),
                         ),
                       ],
@@ -170,7 +173,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
                         fontSize: 14,
                         color: AppTheme.textDark,
                         height: 1.4,
-                        fontWeight: isUnread ? FontWeight.w600 : FontWeight.normal,
+                        fontWeight: isUnread
+                            ? FontWeight.w600
+                            : FontWeight.normal,
                       ),
                     ),
                   ],

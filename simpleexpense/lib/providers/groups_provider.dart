@@ -94,7 +94,7 @@ class GroupsProvider extends ChangeNotifier {
       // Subscribe to balance and members streams for each group
       for (var group in _groups) {
         final groupId = group.id;
-        
+
         // Listen to balance updates
         _firestoreService.streamGroupTotalBalance(groupId).listen((balance) {
           _groupBalances[groupId] = balance;

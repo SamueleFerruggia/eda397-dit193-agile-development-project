@@ -47,8 +47,8 @@ class _HomeScreenState extends State<HomeScreen> {
           Consumer<AuthProvider>(
             builder: (context, authProvider, _) {
               final userId = authProvider.currentUserId ?? '';
-              final unreadStream =
-                  FirestoreService().streamUserUnreadNotificationCount(userId);
+              final unreadStream = FirestoreService()
+                  .streamUserUnreadNotificationCount(userId);
               return StreamBuilder<int>(
                 stream: unreadStream,
                 builder: (context, snapshot) {
@@ -58,13 +58,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     alignment: Alignment.center,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.notifications_outlined,
-                            color: Colors.white),
+                        icon: const Icon(
+                          Icons.notifications_outlined,
+                          color: Colors.white,
+                        ),
                         onPressed: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  const NotificationScreen(),
+                              builder: (context) => const NotificationScreen(),
                             ),
                           );
                         },
@@ -75,26 +76,26 @@ class _HomeScreenState extends State<HomeScreen> {
                           top: 4,
                           child: IgnorePointer(
                             child: Container(
-                            padding: const EdgeInsets.all(4),
-                            constraints: const BoxConstraints(
-                              minWidth: 18,
-                              minHeight: 18,
-                            ),
-                            decoration: const BoxDecoration(
-                              color: Colors.red,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Text(
-                              unreadCount > 99 ? '99+' : '$unreadCount',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
+                              padding: const EdgeInsets.all(4),
+                              constraints: const BoxConstraints(
+                                minWidth: 18,
+                                minHeight: 18,
                               ),
-                              textAlign: TextAlign.center,
+                              decoration: const BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Text(
+                                unreadCount > 99 ? '99+' : '$unreadCount',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
                             ),
                           ),
-                            ),
                         ),
                     ],
                   );
