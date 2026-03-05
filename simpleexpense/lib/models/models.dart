@@ -354,6 +354,66 @@ class GroupInvitation {
   }
 }
 
+// --- NOTIFICATION MODEL ---
+/// Type of notification: expense-related or settlement-related.
+enum NotificationType {
+  expense('expense'),
+  settlement('settlement');
+
+  final String value;
+  const NotificationType(this.value);
+
+  static NotificationType fromString(String value) {
+    return NotificationType.values.firstWhere(
+      (t) => t.value == value,
+      orElse: () => NotificationType.expense,
+    );
+  }
+}
+
+class Notification {
+  final String id;
+  final String userId;
+  final String message;
+  final NotificationType type;
+  final DateTime createdAt;
+  final DateTime? readAt;
+
+  Notification({
+    required this.id,
+    required this.userId,
+    required this.message,
+    required this.type,
+    required this.createdAt,
+    this.readAt,
+  });
+
+  bool get isUnread => readAt == null;
+
+  factory Notification.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return Notification(
+      id: doc.id,
+      userId: data['userId'] ?? '',
+      message: data['message'] ?? '',
+      type: NotificationType.fromString(data['type'] ?? 'expense'),
+      createdAt:
+          (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      readAt: (data['readAt'] as Timestamp?)?.toDate(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'userId': userId,
+      'message': message,
+      'type': type.value,
+      'createdAt': Timestamp.fromDate(createdAt),
+      if (readAt != null) 'readAt': Timestamp.fromDate(readAt!),
+    };
+  }
+}
+
 // --- INVITATION STATUS ENUM ---
 enum InvitationStatus {
   pending('pending'),
