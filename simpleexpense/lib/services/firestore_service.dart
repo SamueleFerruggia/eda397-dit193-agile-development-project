@@ -687,3 +687,66 @@ class FirestoreService {
             .toList());
   }
 }
+  // --- NOTIFICATIONS ---
+
+  /// Adds a notification for a user (e.g. expense or settlement).
+  Future<void> addNotification({
+    required String userId,
+    required String message,
+    required NotificationType type,
+  }) async {
+    await _db.collection('notifications').add({
+      'userId': userId,
+      'message': message,
+      'type': type.value,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Stream of notifications for a user, newest first.
+  Stream<List<Notification>> streamUserNotifications(String userId) {
+    if (userId.isEmpty) return Stream.value([]);
+    return _db
+        .collection('notifications')
+        .where('userId', isEqualTo: userId)
+        .snapshots()
+        .map((snapshot) {
+          final list = snapshot.docs
+              .map((doc) => Notification.fromFirestore(doc))
+              .toList();
+          list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return list;
+        });
+  }
+
+  /// Stream of unread notification count for a user.
+  Stream<int> streamUserUnreadNotificationCount(String userId) {
+    if (userId.isEmpty) return Stream.value(0);
+    return _db
+        .collection('notifications')
+        .where('userId', isEqualTo: userId)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs
+              .where((doc) => doc.data()['readAt'] == null)
+              .length;
+        });
+  }
+
+  /// Marks all unread notifications for a user as read (sets readAt to now).
+  Future<void> markUserNotificationsAsRead(String userId) async {
+    if (userId.isEmpty) return;
+    final snapshot = await _db
+        .collection('notifications')
+        .where('userId', isEqualTo: userId)
+        .get();
+
+    final batch = _db.batch();
+    for (final doc in snapshot.docs) {
+      if (doc.data()['readAt'] == null) {
+        batch.update(doc.reference, {'readAt': FieldValue.serverTimestamp()});
+      }
+    }
+    await batch.commit();
+  }
+}

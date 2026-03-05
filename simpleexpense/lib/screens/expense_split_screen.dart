@@ -72,7 +72,7 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
   void _updateSplitMode(String mode) {
     setState(() {
       _splitMode = mode;
-      
+
       if (mode == 'Equally') {
         _splitEqually();
       } else if (mode == 'Percentage') {
@@ -102,7 +102,7 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
 
   void _updateAmount(String memberId, String value) {
     final inputValue = double.tryParse(value) ?? 0.0;
-    
+
     setState(() {
       if (_splitMode == 'Percentage') {
         _splitAmounts[memberId] = widget.amount * (inputValue / 100);
@@ -118,7 +118,7 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
 
   double _getTotalPercentage() {
     if (_splitMode != 'Percentage') return 0.0;
-    
+
     return _controllers.values.fold(0.0, (sum, controller) {
       return sum + (double.tryParse(controller.text) ?? 0.0);
     });
@@ -140,16 +140,15 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
       String message;
       if (_splitMode == 'Percentage') {
         final totalPercentage = _getTotalPercentage();
-        message = 'Percentages must equal 100%. Current total: ${_formatAmount(totalPercentage)}%';
+        message =
+            'Percentages must equal 100%. Current total: ${_formatAmount(totalPercentage)}%';
       } else {
-        message = 'Split amounts must equal ${_formatAmount(widget.amount)}. Current total: ${_formatAmount(_getTotalSplit())}';
+        message =
+            'Split amounts must equal ${_formatAmount(widget.amount)}. Current total: ${_formatAmount(_getTotalSplit())}';
       }
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(message), backgroundColor: Colors.red),
       );
       return;
     }
@@ -182,6 +181,26 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
         payerId: widget.payerId,
         splitAmounts: validSplits,
       );
+
+      // Notify each user involved in the expense (except the submitter)
+      final groupName = groupsProvider.currentGroupName ?? 'Group';
+      final payerMember = _members
+          .where((m) => m.uid == widget.payerId)
+          .firstOrNull;
+      final payerName = payerMember?.name ?? 'Someone';
+      final message =
+          'In $groupName: $payerName added expense "${widget.description}"';
+      final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+      final involvedUserIds = <String>{widget.payerId, ...validSplits.keys};
+      for (final userId in involvedUserIds) {
+        if (userId != currentUserId) {
+          await FirestoreService().addNotification(
+            userId: userId,
+            message: message,
+            type: NotificationType.expense,
+          );
+        }
+      }
 
       if (!mounted) return;
 
@@ -271,62 +290,83 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                   },
                   itemBuilder: (BuildContext context) {
                     final List<PopupMenuEntry<String>> items = [];
-                    
+
                     if (_splitMode != 'Equally') {
-                      items.add(PopupMenuItem<String>(
-                        value: 'Equally',
-                        height: 56,
-                        child: Row(
-                          children: const [
-                            Icon(Icons.balance, color: Color(0xFF7A9B76), size: 22),
-                            SizedBox(width: 12),
-                            Text(
-                              'Split Equally',
-                              style: TextStyle(fontSize: 15),
-                            ),
-                          ],
+                      items.add(
+                        PopupMenuItem<String>(
+                          value: 'Equally',
+                          height: 56,
+                          child: Row(
+                            children: const [
+                              Icon(
+                                Icons.balance,
+                                color: Color(0xFF7A9B76),
+                                size: 22,
+                              ),
+                              SizedBox(width: 12),
+                              Text(
+                                'Split Equally',
+                                style: TextStyle(fontSize: 15),
+                              ),
+                            ],
+                          ),
                         ),
-                      ));
+                      );
                     }
-                    
+
                     if (_splitMode != 'Exact Amount') {
-                      items.add(PopupMenuItem<String>(
-                        value: 'Exact Amount',
-                        height: 56,
-                        child: Row(
-                          children: const [
-                            Icon(Icons.attach_money, color: Color(0xFF7A9B76), size: 22),
-                            SizedBox(width: 12),
-                            Text(
-                              'Exact Amount',
-                              style: TextStyle(fontSize: 15),
-                            ),
-                          ],
+                      items.add(
+                        PopupMenuItem<String>(
+                          value: 'Exact Amount',
+                          height: 56,
+                          child: Row(
+                            children: const [
+                              Icon(
+                                Icons.attach_money,
+                                color: Color(0xFF7A9B76),
+                                size: 22,
+                              ),
+                              SizedBox(width: 12),
+                              Text(
+                                'Exact Amount',
+                                style: TextStyle(fontSize: 15),
+                              ),
+                            ],
+                          ),
                         ),
-                      ));
+                      );
                     }
-                    
+
                     if (_splitMode != 'Percentage') {
-                      items.add(PopupMenuItem<String>(
-                        value: 'Percentage',
-                        height: 56,
-                        child: Row(
-                          children: const [
-                            Icon(Icons.percent, color: Color(0xFF7A9B76), size: 22),
-                            SizedBox(width: 12),
-                            Text(
-                              'Percentage',
-                              style: TextStyle(fontSize: 15),
-                            ),
-                          ],
+                      items.add(
+                        PopupMenuItem<String>(
+                          value: 'Percentage',
+                          height: 56,
+                          child: Row(
+                            children: const [
+                              Icon(
+                                Icons.percent,
+                                color: Color(0xFF7A9B76),
+                                size: 22,
+                              ),
+                              SizedBox(width: 12),
+                              Text(
+                                'Percentage',
+                                style: TextStyle(fontSize: 15),
+                              ),
+                            ],
+                          ),
                         ),
-                      ));
+                      );
                     }
-                    
+
                     return items;
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF7A9B76),
                       borderRadius: BorderRadius.circular(12),
@@ -347,8 +387,8 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                               _splitMode == 'Equally'
                                   ? Icons.balance
                                   : _splitMode == 'Exact Amount'
-                                      ? Icons.attach_money
-                                      : Icons.percent,
+                                  ? Icons.attach_money
+                                  : Icons.percent,
                               color: AppTheme.textLight,
                               size: 20,
                             ),
@@ -357,8 +397,8 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                               _splitMode == 'Equally'
                                   ? 'Split Equally'
                                   : _splitMode == 'Exact Amount'
-                                      ? 'Exact Amount'
-                                      : 'Percentage',
+                                  ? 'Exact Amount'
+                                  : 'Percentage',
                               style: const TextStyle(
                                 color: AppTheme.textLight,
                                 fontSize: 15,
@@ -380,7 +420,7 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
               ],
             ),
           ),
-          
+
           // Member list with custom amounts
           Expanded(
             child: Container(
@@ -404,7 +444,9 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                           decoration: BoxDecoration(
                             color: AppTheme.background,
                             border: Border.all(
-                              color: AppTheme.secondaryDark.withValues(alpha: 0.3),
+                              color: AppTheme.secondaryDark.withValues(
+                                alpha: 0.3,
+                              ),
                             ),
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -431,9 +473,10 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                                         Expanded(
                                           child: TextField(
                                             controller: controller,
-                                            keyboardType: const TextInputType.numberWithOptions(
-                                              decimal: true,
-                                            ),
+                                            keyboardType:
+                                                const TextInputType.numberWithOptions(
+                                                  decimal: true,
+                                                ),
                                             readOnly: _splitMode == 'Equally',
                                             textAlign: TextAlign.right,
                                             style: const TextStyle(
@@ -444,28 +487,37 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                                               hintText: '0',
                                               filled: true,
                                               fillColor: _splitMode == 'Equally'
-                                                  ? const Color(0xFFD7E6DA).withValues(alpha: 0.5)
+                                                  ? const Color(
+                                                      0xFFD7E6DA,
+                                                    ).withValues(alpha: 0.5)
                                                   : isValid
-                                                    ? const Color(0xFFD7E6DA)
-                                                    : const Color(0xFFFFCDD2),
+                                                  ? const Color(0xFFD7E6DA)
+                                                  : const Color(0xFFFFCDD2),
                                               border: OutlineInputBorder(
-                                                borderRadius: BorderRadius.circular(8),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
                                                 borderSide: BorderSide.none,
                                               ),
-                                              contentPadding: const EdgeInsets.symmetric(
-                                                horizontal: 12,
-                                                vertical: 8,
-                                              ),
+                                              contentPadding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 8,
+                                                  ),
                                               isDense: true,
                                             ),
-                                            onChanged: (value) => _updateAmount(member.uid, value),
+                                            onChanged: (value) => _updateAmount(
+                                              member.uid,
+                                              value,
+                                            ),
                                           ),
                                         ),
                                         const SizedBox(width: 8),
                                         SizedBox(
                                           width: 45,
                                           child: Text(
-                                            _splitMode == 'Percentage' ? '%' : currency,
+                                            _splitMode == 'Percentage'
+                                                ? '%'
+                                                : currency,
                                             style: TextStyle(
                                               color: AppTheme.secondaryDark,
                                               fontSize: 14,
@@ -487,7 +539,8 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                                       '≈ ${_formatAmount(_splitAmounts[member.uid] ?? 0)} $currency',
                                       style: TextStyle(
                                         fontSize: 12,
-                                        color: AppTheme.secondaryDark.withValues(alpha: 0.7),
+                                        color: AppTheme.secondaryDark
+                                            .withValues(alpha: 0.7),
                                         fontStyle: FontStyle.italic,
                                       ),
                                     ),
@@ -500,7 +553,7 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                     ),
             ),
           ),
-          
+
           Container(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
             color: AppTheme.background,
@@ -512,7 +565,9 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primary,
                   foregroundColor: AppTheme.textLight,
-                  disabledBackgroundColor: AppTheme.secondaryDark.withValues(alpha: 0.3),
+                  disabledBackgroundColor: AppTheme.secondaryDark.withValues(
+                    alpha: 0.3,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(26),
                   ),
@@ -521,11 +576,11 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
                 child: _isSaving
                     ? const CircularProgressIndicator(color: AppTheme.textLight)
                     : Text(
-                        isValid 
-                            ? 'Save' 
+                        isValid
+                            ? 'Save'
                             : _splitMode == 'Percentage'
-                                ? 'Total must be 100% (${_formatAmount(_getTotalPercentage())}%)'
-                                : 'Total must be ${_formatAmount(widget.amount)} $currency',
+                            ? 'Total must be 100% (${_formatAmount(_getTotalPercentage())}%)'
+                            : 'Total must be ${_formatAmount(widget.amount)} $currency',
                         style: const TextStyle(fontSize: 14),
                       ),
               ),
