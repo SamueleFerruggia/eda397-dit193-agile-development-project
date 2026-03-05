@@ -198,6 +198,37 @@ class GroupsProvider extends ChangeNotifier {
     await _invitationService.deleteInvitation(invitationId);
   }
 
+  // --- SETTLEMENT ---
+
+  bool _isSettling = false;
+  bool get isSettling => _isSettling;
+
+  /// Settle the debt between two users by creating a settlement expense.
+  /// Returns a map with 'settled' (bool), 'amount' (double), etc.
+  Future<Map<String, dynamic>> settleDebt({
+    required String groupId,
+    required String userA,
+    required String userB,
+  }) async {
+    _isSettling = true;
+    notifyListeners();
+
+    try {
+      final result = await _firestoreService.settleExpensesBetweenUsers(
+        groupId: groupId,
+        userA: userA,
+        userB: userB,
+      );
+      _isSettling = false;
+      notifyListeners();
+      return result;
+    } catch (e) {
+      _isSettling = false;
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   /// Get invitation statistics for current group
   Future<Map<String, int>> getInvitationStats() async {
     final groupId = currentGroupId;

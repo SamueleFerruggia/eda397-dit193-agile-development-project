@@ -8,6 +8,7 @@ import 'package:simpleexpense/screens/expense_detail_screen.dart';
 import 'package:simpleexpense/theme/app_theme.dart';
 import 'package:simpleexpense/screens/widgets/expense_widgets.dart';
 import '../models/models.dart';
+import 'settle_screen.dart';
 
 /// Comprehensive Expense List Screen
 /// Displays all expenses for a group with sorting, filtering, and search capabilities
@@ -214,6 +215,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
         // Convert Firestore documents to Expense objects
         List<Expense> expensesList = snapshot.data!.docs
             .map((doc) => Expense.fromFirestore(doc))
+            .where((expense) => !expense.isSettlement)
             .toList();
 
         // Apply search filter
@@ -701,6 +703,35 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
             ),
           ),
           const SizedBox(width: 10),
+          // Settle button
+          GestureDetector(
+            onTap: () => _navigateToSettleScreen(context),
+            child: Container(
+              width: 52,
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              decoration: BoxDecoration(
+                color: AppTheme.primary,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.handshake, color: Colors.white, size: 20),
+                  const SizedBox(height: 1),
+                  const Text(
+                    'Settle',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
           GestureDetector(
             onTap: () => _navigateToAddExpense(context),
             child: Container(
@@ -733,6 +764,12 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
     );
   }
 
+  void _navigateToSettleScreen(BuildContext context) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => SettleScreen(groupId: widget.groupId),        ),
+    );
+  }
   void _navigateToAddExpense(BuildContext context) {
     Navigator.of(
       context,

@@ -23,13 +23,19 @@ class BalanceService {
       balances[expense.payerId] = 
         (balances[expense.payerId] ?? 0) + expense.amount;
 
-      // Calculate how much each participant owes
-      double splitAmount = expense.amount / expense.splitWith.length;
-
-      // Deduct the split amount from each participant
-      for (var participantId in expense.splitWith) {
-        balances[participantId] = 
-          (balances[participantId] ?? 0) - splitAmount;
+      // Prefer splitAmounts (new format) over splitWith (legacy format)
+      if (expense.splitAmounts.isNotEmpty) {
+        for (var entry in expense.splitAmounts.entries) {
+          balances[entry.key] = 
+            (balances[entry.key] ?? 0) - entry.value;
+        }
+      } else if (expense.splitWith.isNotEmpty) {
+        // Legacy equal-split calculation
+        double splitAmount = expense.amount / expense.splitWith.length;
+        for (var participantId in expense.splitWith) {
+          balances[participantId] = 
+            (balances[participantId] ?? 0) - splitAmount;
+        }
       }
     }
 
