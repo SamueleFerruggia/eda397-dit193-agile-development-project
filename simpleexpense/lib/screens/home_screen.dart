@@ -55,6 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   final unreadCount = snapshot.data ?? 0;
                   return Stack(
                     clipBehavior: Clip.none,
+                    alignment: Alignment.center,
                     children: [
                       IconButton(
                         icon: const Icon(Icons.notifications_outlined,
@@ -70,9 +71,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       if (unreadCount > 0)
                         Positioned(
-                          right: 6,
-                          top: 6,
-                          child: Container(
+                          right: 4,
+                          top: 4,
+                          child: IgnorePointer(
+                            child: Container(
                             padding: const EdgeInsets.all(4),
                             constraints: const BoxConstraints(
                               minWidth: 18,
@@ -92,6 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               textAlign: TextAlign.center,
                             ),
                           ),
+                            ),
                         ),
                     ],
                   );
