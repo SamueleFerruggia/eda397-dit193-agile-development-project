@@ -187,6 +187,26 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
         splitAmounts: validSplits,
       );
 
+      // Notify each user involved in the expense (except the submitter)
+      final groupName = groupsProvider.currentGroupName ?? 'Group';
+      final payerMember = _members
+          .where((m) => m.uid == widget.payerId)
+          .firstOrNull;
+      final payerName = payerMember?.name ?? 'Someone';
+      final message =
+          'In $groupName: $payerName added expense "${widget.description}"';
+      final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+      final involvedUserIds = <String>{widget.payerId, ...validSplits.keys};
+      for (final userId in involvedUserIds) {
+        if (userId != currentUserId) {
+          await FirestoreService().addNotification(
+            userId: userId,
+            message: message,
+            type: NotificationType.expense,
+          );
+        }
+      }
+
       if (!mounted) return;
 
       Navigator.of(context).pop();
