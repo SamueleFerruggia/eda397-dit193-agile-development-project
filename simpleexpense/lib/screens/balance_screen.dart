@@ -7,6 +7,8 @@ import 'package:simpleexpense/services/balance_service.dart';
 import 'package:simpleexpense/services/firestore_service.dart';
 import 'package:simpleexpense/theme/app_theme.dart';
 import 'package:simpleexpense/screens/widgets/expense_widgets.dart';
+import 'package:simpleexpense/screens/archived_settlements_screen.dart';
+import '../models/settle_request.dart';
 import '../models/models.dart';
 
 /// Screen displaying net balances and settlement suggestions
@@ -36,6 +38,113 @@ class _BalanceScreenState extends State<BalanceScreen> {
     });
   }
 
+  Widget settleRequestCard(SettleRequest req) {
+    return StatefulBuilder(
+      builder: (context, setState) {
+        // Use a local state variable to track dismissal
+        return StatefulBuilder(
+          builder: (context, innerSetState) {
+            bool dismissed = false;
+            return AnimatedBuilder(
+              animation: Listenable.merge([]),
+              builder: (context, _) {
+                if (dismissed) return const SizedBox.shrink();
+                return FutureBuilder<DocumentSnapshot>(
+                  future: FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(req.fromUserId)
+                      .get(),
+                  builder: (context, userSnapshot) {
+                    String fromName = req.fromUserId;
+                    if (userSnapshot.connectionState == ConnectionState.done &&
+                        userSnapshot.hasData &&
+                        userSnapshot.data!.exists) {
+                      final data =
+                          userSnapshot.data!.data() as Map<String, dynamic>?;
+                      if (data != null && data['name'] != null) {
+                        fromName = data['name'];
+                      }
+                    }
+                    String sentTime = '';
+                    final date = req.createdAt;
+                    sentTime =
+                        'Sent: ${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+                    return Card(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'From: $fromName',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text('Amount: ${req.amount.toStringAsFixed(2)}'),
+                            if (sentTime.isNotEmpty) Text(sentTime),
+                            Row(
+                              children: [
+                                ElevatedButton(
+                                  onPressed: () async {
+                                    // First mark the request as accepted
+                                    await _firestoreService
+                                        .updateSettleRequestStatus(
+                                          req.id,
+                                          'accepted',
+                                        );
+                                    if (!mounted) return;
+                                    // Execute the actual balance settlement
+                                    await _executeSettlement(
+                                      req.fromUserId,
+                                      req.toUserId,
+                                    );
+                                    if (!mounted) return;
+                                    // Dismiss the card after settlement completes
+                                    innerSetState(() => dismissed = true);
+                                  },
+                                  child: const Text('Approve'),
+                                ),
+                                const SizedBox(width: 12),
+                                OutlinedButton(
+                                  onPressed: () async {
+                                    await _firestoreService
+                                        .updateSettleRequestStatus(
+                                          req.id,
+                                          'declined',
+                                        );
+                                    if (!mounted) return;
+                                    innerSetState(() => dismissed = true);
+                                    ScaffoldMessenger.of(
+                                      this.context,
+                                    ).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Settlement declined.'),
+                                      ),
+                                    );
+                                  },
+                                  child: const Text('Decline'),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<GroupsProvider>(
@@ -59,7 +168,11 @@ class _BalanceScreenState extends State<BalanceScreen> {
           width: double.infinity,
           height: double.infinity,
           color: AppTheme.textLight,
-          child: _buildBalanceView(context, groupsProvider),
+          child: Column(
+            children: [
+              Expanded(child: _buildBalanceView(context, groupsProvider)),
+            ],
+          ),
         );
 
         if (widget.embedInParent) {
@@ -129,7 +242,10 @@ class _BalanceScreenState extends State<BalanceScreen> {
               expenses,
               members,
             );
-            final settlements = _balanceService.calculateSettlements(balances);
+            // Only consider balances for current group members
+            final allSettled = members.every(
+              (m) => (balances[m.uid] ?? 0).abs() < 0.01,
+            );
             final currentUserId = context.read<AuthProvider>().currentUserId;
             final currency = groupsProvider.currentCurrency ?? 'SEK';
 
@@ -140,18 +256,71 @@ class _BalanceScreenState extends State<BalanceScreen> {
                 children: [
                   _buildSectionTitle('Net Balances'),
                   const SizedBox(height: 12),
-                  _buildBalancesList(
-                    balances,
-                    members,
-                    currentUserId,
-                    currency,
+                  if (allSettled)
+                    _buildAllSettledCard()
+                  else
+                    _buildBalancesList(
+                      balances,
+                      members,
+                      currentUserId,
+                      currency,
+                    ),
+                  const SizedBox(height: 24),
+                  _buildSectionTitle('Settlement Requests'),
+                  const SizedBox(height: 12),
+                  StreamBuilder<List<SettleRequest>>(
+                    stream: _firestoreService.streamSettleRequestsForGroup(
+                      widget.groupId,
+                    ),
+                    builder: (context, reqSnapshot) {
+                      if (!reqSnapshot.hasData) {
+                        return Text(
+                          'No settlement requests yet.',
+                          style: TextStyle(color: AppTheme.secondaryDark),
+                        );
+                      }
+                      // Only show requests with status 'pending' and toUserId matching currentUserId
+                      final requests = reqSnapshot.data!
+                          .where(
+                            (req) =>
+                                req.status == 'pending' &&
+                                req.toUserId == currentUserId,
+                          )
+                          .toList();
+                      if (requests.isEmpty) {
+                        return Text(
+                          'No settlement requests yet.',
+                          style: TextStyle(color: AppTheme.secondaryDark),
+                        );
+                      }
+                      return Column(
+                        children: requests
+                            .map((req) => settleRequestCard(req))
+                            .toList(),
+                      );
+                    },
                   ),
                   const SizedBox(height: 24),
-                  _buildSectionTitle('Suggested Settlements'),
-                  const SizedBox(height: 12),
-                  settlements.isEmpty
-                      ? _buildAllSettledCard()
-                      : _buildSettlementsList(settlements, members, currency),
+                  // Link to archived settlements
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ArchivedSettlementsScreen(
+                              groupId: widget.groupId,
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.history, size: 18),
+                      label: const Text('View Archived Settlements'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppTheme.secondaryDark,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             );
@@ -190,7 +359,6 @@ class _BalanceScreenState extends State<BalanceScreen> {
       children: sortedMembers.map((member) {
         final balance = balances[member.uid] ?? 0;
         final isCurrentUser = member.uid == currentUserId;
-
         return _buildBalanceCard(member.name, balance, currency, isCurrentUser);
       }).toList(),
     );
@@ -306,160 +474,44 @@ class _BalanceScreenState extends State<BalanceScreen> {
     );
   }
 
-  Widget _buildSettlementsList(
-    List<Settlement> settlements,
-    List<GroupMember> members,
-    String currency,
-  ) {
-    final currentUserId = context.read<AuthProvider>().currentUserId;
+  /// Execute the settlement via the provider and show feedback
+  Future<void> _executeSettlement(String userA, String userB) async {
+    final groupsProvider = context.read<GroupsProvider>();
 
-    return Column(
-      children: settlements.map((settlement) {
-        final fromMember = members.firstWhere(
-          (m) => m.uid == settlement.fromUserId,
-          orElse: () => GroupMember(
-            uid: settlement.fromUserId,
-            name: 'Unknown',
-            email: '',
-          ),
-        );
-        final toMember = members.firstWhere(
-          (m) => m.uid == settlement.toUserId,
-          orElse: () =>
-              GroupMember(uid: settlement.toUserId, name: 'Unknown', email: ''),
-        );
+    try {
+      final result = await groupsProvider.settleDebt(
+        groupId: widget.groupId,
+        userA: userA,
+        userB: userB,
+      );
 
-        final isUserInvolved =
-            settlement.fromUserId == currentUserId ||
-            settlement.toUserId == currentUserId;
+      if (!mounted) return;
 
-        return _buildSettlementCard(
-          fromMember.name,
-          toMember.name,
-          settlement.amount,
-          currency,
-          isUserInvolved,
-          settlement.fromUserId == currentUserId,
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildSettlementCard(
-    String fromName,
-    String toName,
-    double amount,
-    String currency,
-    bool isUserInvolved,
-    bool isUserPaying,
-  ) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isUserInvolved ? Colors.blue.shade50 : Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isUserInvolved ? Colors.blue.shade200 : Colors.grey.shade200,
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      isUserPaying ? 'You' : fromName,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.textDark,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Icon(
-                      Icons.arrow_forward,
-                      size: 16,
-                      color: AppTheme.secondaryDark,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      isUserPaying ? toName : (isUserInvolved ? 'You' : toName),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.textDark,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${amount.toStringAsFixed(2)} $currency',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade700,
-                  ),
-                ),
-              ],
+      if (result['settled'] == true) {
+        final amount = (result['amount'] as num).toDouble();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Settlement complete — ${amount.toStringAsFixed(2)} settled.',
             ),
+            backgroundColor: AppTheme.success,
           ),
-          if (isUserInvolved)
-            ElevatedButton(
-              onPressed: () {
-                _showSettleUpDialog(fromName, toName, amount, currency);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-              ),
-              child: const Text('Settle'),
-            ),
-        ],
-      ),
-    );
-  }
-
-  void _showSettleUpDialog(
-    String fromName,
-    String toName,
-    double amount,
-    String currency,
-  ) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Settle Up'),
-        content: Text(
-          'Record that $fromName paid $toName ${amount.toStringAsFixed(2)} $currency?',
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['reason'] as String? ?? 'Nothing to settle.'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Settlement failed: $e'),
+          backgroundColor: AppTheme.error,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Settlement feature coming soon!'),
-                ),
-              );
-            },
-            child: const Text('Confirm'),
-          ),
-        ],
-      ),
-    );
+      );
+    }
   }
 }

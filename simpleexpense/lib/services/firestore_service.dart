@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../models/models.dart';
+import '../models/settle_request.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -405,6 +406,281 @@ class FirestoreService {
       final members = doc['members'] as List? ?? [];
       return members.length;
     });
+  }
+
+  // --- SETTLEMENT ---
+
+  /// Calculate the pairwise debt between two users without creating any records.
+  /// Returns a map: {amount: double, debtorId: String, creditorId: String}
+  /// If balance is zero, amount will be 0.0.
+  Future<Map<String, dynamic>> getPairwiseDebt({
+    required String groupId,
+    required String userA,
+    required String userB,
+  }) async {
+    final expensesSnapshot = await _db
+        .collection('groups')
+        .doc(groupId)
+        .collection('expenses')
+        .get();
+
+    double debtBtoA = 0;
+    double debtAtoB = 0;
+
+    for (final doc in expensesSnapshot.docs) {
+      final data = doc.data();
+      final payerId = data['payerId'] as String? ?? '';
+
+      Map<String, double> splits = {};
+      if (data['splitAmounts'] != null) {
+        final raw = data['splitAmounts'] as Map<String, dynamic>;
+        splits = raw.map((k, v) => MapEntry(k, (v as num?)?.toDouble() ?? 0.0));
+      } else if (data['splitWith'] != null) {
+        final splitWith = List<String>.from(data['splitWith'] as List? ?? []);
+        final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+        if (splitWith.isNotEmpty) {
+          final perPerson = amount / splitWith.length;
+          for (final uid in splitWith) {
+            splits[uid] = perPerson;
+          }
+        }
+      }
+
+      if (payerId == userA && splits.containsKey(userB)) {
+        debtBtoA += splits[userB]!;
+      }
+      if (payerId == userB && splits.containsKey(userA)) {
+        debtAtoB += splits[userA]!;
+      }
+    }
+
+    final pairwiseDebt = debtBtoA - debtAtoB;
+    if (pairwiseDebt.abs() < 0.01) {
+      return {'amount': 0.0, 'debtorId': userA, 'creditorId': userB};
+    }
+    if (pairwiseDebt > 0) {
+      return {'amount': pairwiseDebt, 'debtorId': userB, 'creditorId': userA};
+    } else {
+      return {'amount': -pairwiseDebt, 'debtorId': userA, 'creditorId': userB};
+    }
+  }
+
+  /// Settle the debt between two users by creating a settlement expense
+  /// that offsets their pairwise balance. Original expenses are preserved.
+  ///
+  /// Returns a map with settlement details:
+  /// - 'settled': bool
+  /// - 'amount': double (the settled amount)
+  /// - 'debtorId': String (who owed)
+  /// - 'creditorId': String (who was owed)
+  /// - 'reason': String (if not settled)
+  Future<Map<String, dynamic>> settleExpensesBetweenUsers({
+    required String groupId,
+    required String userA,
+    required String userB,
+  }) async {
+    // 1. Fetch all active expenses for the group
+    final expensesSnapshot = await _db
+        .collection('groups')
+        .doc(groupId)
+        .collection('expenses')
+        .get();
+
+    // 2. Calculate pairwise debt from raw Firestore data
+    double debtBtoA = 0; // What userB owes userA
+    double debtAtoB = 0; // What userA owes userB
+
+    for (final doc in expensesSnapshot.docs) {
+      final data = doc.data();
+      final payerId = data['payerId'] as String? ?? '';
+
+      // Build split map from whichever format is present
+      Map<String, double> splits = {};
+      if (data['splitAmounts'] != null) {
+        final raw = data['splitAmounts'] as Map<String, dynamic>;
+        splits = raw.map((k, v) => MapEntry(k, (v as num?)?.toDouble() ?? 0.0));
+      } else if (data['splitWith'] != null) {
+        final splitWith = List<String>.from(data['splitWith'] as List? ?? []);
+        final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+        if (splitWith.isNotEmpty) {
+          final perPerson = amount / splitWith.length;
+          for (final uid in splitWith) {
+            splits[uid] = perPerson;
+          }
+        }
+      }
+
+      // Accumulate pairwise debts
+      if (payerId == userA && splits.containsKey(userB)) {
+        debtBtoA += splits[userB]!;
+      }
+      if (payerId == userB && splits.containsKey(userA)) {
+        debtAtoB += splits[userA]!;
+      }
+    }
+
+    final pairwiseDebt = debtBtoA - debtAtoB;
+
+    if (pairwiseDebt.abs() < 0.01) {
+      return {
+        'settled': false,
+        'amount': 0.0,
+        'reason': 'Balance is already zero between these users',
+      };
+    }
+
+    // 3. Determine debtor and creditor
+    final String debtorId;
+    final String creditorId;
+    final double amount;
+
+    if (pairwiseDebt > 0) {
+      debtorId = userB; // B owes A
+      creditorId = userA;
+      amount = pairwiseDebt;
+    } else {
+      debtorId = userA; // A owes B
+      creditorId = userB;
+      amount = -pairwiseDebt;
+    }
+
+    // 4. Atomically create settlement expense + archive record
+    final batch = _db.batch();
+
+    // Settlement expense: debtor "pays" creditor
+    // Effect on balances: debtor gets +amount, creditor gets -amount
+    // This zeroes out the pairwise debt without affecting other users
+    final expenseRef = _db
+        .collection('groups')
+        .doc(groupId)
+        .collection('expenses')
+        .doc();
+
+    batch.set(expenseRef, {
+      'description': 'Settlement',
+      'amount': amount,
+      'payerId': debtorId,
+      'payerName': '',
+      'splitWith': [creditorId],
+      'splitAmounts': {creditorId: amount},
+      'category': 'Settlement',
+      'isSettlement': true,
+      'settlementPair': {'userA': userA, 'userB': userB},
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+
+    // Archive record for settlement history
+    final archiveRef = _db
+        .collection('groups')
+        .doc(groupId)
+        .collection('archived_expenses')
+        .doc();
+
+    batch.set(archiveRef, {
+      'type': 'settlement',
+      'description': 'Settlement',
+      'groupId': groupId,
+      'debtorId': debtorId,
+      'creditorId': creditorId,
+      'amount': amount,
+      'settlementPair': {'userA': userA, 'userB': userB},
+      'involvedUsers': [userA, userB],
+      'settlementExpenseId': expenseRef.id,
+      'archivedAt': FieldValue.serverTimestamp(),
+    });
+
+    await batch.commit();
+
+    return {
+      'settled': true,
+      'amount': amount,
+      'debtorId': debtorId,
+      'creditorId': creditorId,
+    };
+  }
+
+  /// Stream archived expenses for a group
+  Stream<List<Map<String, dynamic>>> streamArchivedExpenses(String groupId) {
+    return _db
+        .collection('groups')
+        .doc(groupId)
+        .collection('archived_expenses')
+        .snapshots()
+        .map((snapshot) {
+          final docs = snapshot.docs.map((doc) {
+            final data = doc.data();
+            return {'id': doc.id, ...data};
+          }).toList();
+
+          // Sort by archivedAt descending in-memory
+          docs.sort((a, b) {
+            final aTime = a['archivedAt'] as Timestamp?;
+            final bTime = b['archivedAt'] as Timestamp?;
+            if (aTime == null && bTime == null) return 0;
+            if (aTime == null) return 1;
+            if (bTime == null) return -1;
+            return bTime.compareTo(aTime);
+          });
+
+          return docs;
+        });
+  }
+
+  // --- SETTLE REQUESTS ---
+
+  Future<void> createSettleRequest({
+    required String groupId,
+    required String fromUserId,
+    required String toUserId,
+    required double amount,
+    required String expenseId,
+  }) async {
+    await _db.collection('settleRequests').add({
+      'groupId': groupId,
+      'fromUserId': fromUserId,
+      'toUserId': toUserId,
+      'amount': amount,
+      'expenseId': expenseId,
+      'status': 'pending',
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Stream<List<SettleRequest>> streamSettleRequestsForUser(String userId) {
+    return _db
+        .collection('settleRequests')
+        .where('toUserId', isEqualTo: userId)
+        .where('status', isEqualTo: 'pending')
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => SettleRequest.fromFirestore(doc))
+              .toList(),
+        );
+  }
+
+  Future<void> updateSettleRequestStatus(
+    String requestId,
+    String status,
+  ) async {
+    await FirebaseFirestore.instance
+        .collection('settleRequests')
+        .doc(requestId)
+        .update({'status': status, 'updatedAt': FieldValue.serverTimestamp()});
+  }
+
+  Stream<List<SettleRequest>> streamSettleRequestsForGroup(String groupId) {
+    return _db
+        .collection('settleRequests')
+        .where('groupId', isEqualTo: groupId)
+        .where('status', isEqualTo: 'pending')
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => SettleRequest.fromFirestore(doc))
+              .toList(),
+        );
   }
 
   // --- NOTIFICATIONS ---

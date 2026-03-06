@@ -265,7 +265,7 @@ class GroupInfoWidget extends StatelessWidget {
 
                 final totalAmount = expenses.fold(
                   0.0,
-                  (sum, e) => sum + e.amount,
+                  (acc, e) => acc + e.amount,
                 );
                 final myExpensesCount = expenses
                     .where((e) => e.payerId == currentUserId)
@@ -363,7 +363,7 @@ class GroupInfoWidget extends StatelessWidget {
                 const SizedBox(width: 6),
                 _buildHeaderStatChip(
                   Icons.attach_money,
-                  '${totalAmount.toStringAsFixed(0)}',
+                  totalAmount.toStringAsFixed(0),
                   currency,
                 ),
               ],
