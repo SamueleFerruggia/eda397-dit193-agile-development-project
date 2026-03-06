@@ -39,7 +39,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
   }
 
 
-  Widget settleRequestCard(SettleRequest req) {
+  Widget settleRequestCard(SettleRequest req, String currency) {
     return StatefulBuilder(
       builder: (context, setState) {
         // Use a local state variable to track dismissal
@@ -71,7 +71,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('From: $fromName', style: const TextStyle(fontWeight: FontWeight.bold)),
-                            Text('Amount: ${req.amount.toStringAsFixed(2)}'),
+                            Text('Amount: ${req.amount.toStringAsFixed(2)} $currency'),
                             if (sentTime.isNotEmpty) Text(sentTime),
                             Row(
                               children: [
@@ -83,6 +83,13 @@ class _BalanceScreenState extends State<BalanceScreen> {
                                     // Execute the actual balance settlement
                                     await _executeSettlement(req.fromUserId, req.toUserId);
                                     if (!mounted) return;
+                                    // Notify requester that their settlement was accepted
+                                    await _firestoreService.addNotification(
+                                      userId: req.fromUserId,
+                                      message: 'Your settlement request for ${req.amount.toStringAsFixed(2)} $currency was accepted.',
+                                      type: NotificationType.settlement,
+                                    );
+                                    if (!mounted) return;
                                     // Dismiss the card after settlement completes
                                     innerSetState(() => dismissed = true);
                                   },
@@ -92,6 +99,13 @@ class _BalanceScreenState extends State<BalanceScreen> {
                                 OutlinedButton(
                                   onPressed: () async {
                                     await _firestoreService.updateSettleRequestStatus(req.id, 'declined');
+                                    if (!mounted) return;
+                                    // Notify requester that their settlement was declined
+                                    await _firestoreService.addNotification(
+                                      userId: req.fromUserId,
+                                      message: 'Your settlement request for ${req.amount.toStringAsFixed(2)} $currency was declined.',
+                                      type: NotificationType.settlement,
+                                    );
                                     if (!mounted) return;
                                     innerSetState(() => dismissed = true);
                                     ScaffoldMessenger.of(this.context).showSnackBar(
@@ -248,7 +262,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
                           );
                         }
                         return Column(
-                          children: requests.map((req) => settleRequestCard(req)).toList(),
+                          children: requests.map((req) => settleRequestCard(req, currency)).toList(),
                         );
                     },
                   ),

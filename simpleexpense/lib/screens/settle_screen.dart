@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:simpleexpense/providers/auth_provider.dart';
+import 'package:simpleexpense/providers/groups_provider.dart';
 import 'package:simpleexpense/services/firestore_service.dart';
 import '../models/models.dart';
 
@@ -25,6 +26,11 @@ class _SettleScreenState extends State<SettleScreen> {
   @override
   Widget build(BuildContext context) {
     final currentUserId = context.read<AuthProvider>().currentUserId;
+    final groupsProvider = context.watch<GroupsProvider>();
+    final currency = (groupsProvider.currentGroupId == widget.groupId)
+        ? (groupsProvider.currentCurrency ?? 'SEK')
+        : 'SEK';
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settle Up'),
@@ -103,12 +109,12 @@ class _SettleScreenState extends State<SettleScreen> {
                     )
                   else if (_debtorId == currentUserId)
                     Text(
-                      'You owe ${selectedMember.name} ${_amount.toStringAsFixed(2)} SEK.',
+                      'You owe ${selectedMember.name} ${_amount.toStringAsFixed(2)} $currency.',
                       style: const TextStyle(fontSize: 16, color: Colors.red),
                     )
                   else
                     Text(
-                      '${selectedMember.name} owes you ${_amount.toStringAsFixed(2)} SEK.',
+                      '${selectedMember.name} owes you ${_amount.toStringAsFixed(2)} $currency.',
                       style: const TextStyle(fontSize: 16, color: Colors.blue),
                     ),
                 ],
@@ -140,17 +146,30 @@ class _SettleScreenState extends State<SettleScreen> {
       _isSubmitting = true;
       _infoMessage = null;
     });
-    final currentUserId = context.read<AuthProvider>().currentUserId;
+    final authProvider = context.read<AuthProvider>();
+    final currentUserId = authProvider.currentUserId!;
+    final requesterName = await _firestoreService.getUserName(currentUserId) ??
+        authProvider.currentUserName ??
+        'Someone';
+    final currency = await _firestoreService.getGroupCurrency(widget.groupId);
+
     await _firestoreService.createSettleRequest(
       groupId: widget.groupId,
-      fromUserId: currentUserId!,
+      fromUserId: currentUserId,
       toUserId: _selectedUserId!,
       amount: _amount,
       expenseId: '',
     );
-    setState(() {
-      _isSubmitting = false;
-      _infoMessage = 'Settle request sent!';
-    });
+    await _firestoreService.addNotification(
+      userId: _selectedUserId!,
+      message: '$requesterName requested to settle: ${_amount.toStringAsFixed(2)} $currency',
+      type: NotificationType.settlement,
+    );
+    if (mounted) {
+      setState(() {
+        _isSubmitting = false;
+        _infoMessage = 'Settle request sent!';
+      });
+    }
   }
 }
