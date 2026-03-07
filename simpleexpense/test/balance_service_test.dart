@@ -91,5 +91,44 @@ void main() {
 
       expect(settlements.isEmpty, true);
     });
+
+    test('Multiple creditors and debtors produce expected settlements', () {
+      // u1 is owed 50, u2 is owed 30, u3 owes 40, u4 owes 40
+      final balances = {'u1': 50.0, 'u2': 30.0, 'u3': -40.0, 'u4': -40.0};
+
+      final settlements = balanceService.calculateSettlements(balances);
+
+      expect(settlements.length, 3);
+
+      // Convert to a map for easier assertions: from->to -> amount
+      final byKey = {
+        for (final s in settlements) '${s.fromUserId}->${s.toUserId}': s.amount,
+      };
+
+      expect(byKey['u3->u1'], 40.0);
+      expect(byKey['u4->u1'], 10.0);
+      expect(byKey['u4->u2'], 30.0);
+    });
+
+    test('getUserSettlements returns only settlements involving that user', () {
+      final balances = {'u1': 50.0, 'u2': 30.0, 'u3': -40.0, 'u4': -40.0};
+
+      final u4Settlements = balanceService.getUserSettlements('u4', balances);
+
+      // u4 participates in two settlements in the scenario above
+      expect(u4Settlements.length, 2);
+      expect(
+        u4Settlements.any(
+          (s) => s.fromUserId == 'u4' && s.toUserId == 'u1' && s.amount == 10.0,
+        ),
+        isTrue,
+      );
+      expect(
+        u4Settlements.any(
+          (s) => s.fromUserId == 'u4' && s.toUserId == 'u2' && s.amount == 30.0,
+        ),
+        isTrue,
+      );
+    });
   });
 }

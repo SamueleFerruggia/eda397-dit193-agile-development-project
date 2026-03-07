@@ -9,6 +9,14 @@ class FirestoreService {
 
   // --- USERS ---
 
+  /// Returns the display name for a user from Firestore, or null if not found.
+  Future<String?> getUserName(String uid) async {
+    final doc = await _db.collection('users').doc(uid).get();
+    if (!doc.exists) return null;
+    final data = doc.data();
+    return data?['name'] as String?;
+  }
+
   Future<void> saveUser(
     String uid,
     String email,
@@ -61,6 +69,14 @@ class FirestoreService {
           (snapshot) =>
               snapshot.docs.map((doc) => Group.fromFirestore(doc)).toList(),
         );
+  }
+
+  /// Returns the group's currency code (e.g. SEK, USD). Defaults to SEK if missing.
+  Future<String> getGroupCurrency(String groupId) async {
+    final groupDoc = await _db.collection('groups').doc(groupId).get();
+    if (!groupDoc.exists) return 'SEK';
+    final data = groupDoc.data();
+    return data?['currency'] as String? ?? 'SEK';
   }
 
   Future<List<GroupMember>> getGroupMembers(String groupId) async {

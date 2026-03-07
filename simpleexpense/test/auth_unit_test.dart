@@ -1,8 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
 /// Unit tests for Email and Password Authentication
-/// Simple validation tests without mocking or Firebase integration
-/// To run it you can use this command: flutter test test/auth_unit_test.dart
 
 void main() {
   group('Email Validation', () {
