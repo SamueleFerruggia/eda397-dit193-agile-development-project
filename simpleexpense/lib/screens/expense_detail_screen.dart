@@ -4,12 +4,15 @@ import 'package:provider/provider.dart';
 import 'package:simpleexpense/providers/groups_provider.dart';
 import 'package:simpleexpense/theme/app_theme.dart';
 import 'package:simpleexpense/screens/widgets/expense_widgets.dart';
+import 'package:simpleexpense/services/expense_pdf_export.dart';
+import 'package:simpleexpense/services/expense_csv_export.dart';
 
 class ExpenseDetailScreen extends StatefulWidget {
   final String description;
   final double amount;
   final String payerId;
   final Map<String, double> splitAmounts; // Map of userId -> amount
+  final String? payerName;
 
   const ExpenseDetailScreen({
     super.key,
@@ -17,6 +20,7 @@ class ExpenseDetailScreen extends StatefulWidget {
     required this.amount,
     required this.payerId,
     required this.splitAmounts,
+    this.payerName,
   });
 
   @override
@@ -24,6 +28,77 @@ class ExpenseDetailScreen extends StatefulWidget {
 }
 
 class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
+  void _showExportChoice(BuildContext context, GroupsProvider groupsProvider) {
+    final currency = groupsProvider.currentCurrency ?? 'SEK';
+    final groupName = groupsProvider.currentGroupName;
+
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppTheme.background,
+        title: const Text('Export expense detail'),
+        content: const Text('Choose export format'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton.icon(
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+              await exportExpenseDetailToPdf(
+                description: widget.description,
+                amount: widget.amount,
+                currency: currency,
+                payerId: widget.payerId,
+                splitAmounts: widget.splitAmounts,
+                payerName: widget.payerName,
+                groupName: groupName,
+              );
+            },
+            icon: const Icon(Icons.picture_as_pdf, size: 20),
+            label: const Text('PDF'),
+          ),
+          FilledButton.icon(
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+              await exportExpenseDetailToCsv(
+                context: context,
+                description: widget.description,
+                amount: widget.amount,
+                currency: currency,
+                payerId: widget.payerId,
+                splitAmounts: widget.splitAmounts,
+                payerName: widget.payerName,
+              );
+            },
+            icon: const Icon(Icons.table_chart, size: 20),
+            label: const Text('CSV'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailHeader(BuildContext context, GroupsProvider groupsProvider) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppTheme.textLight),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          const Spacer(),
+          IconButton(
+            icon: const Icon(Icons.download, color: AppTheme.textLight, size: 24),
+            onPressed: () => _showExportChoice(context, groupsProvider),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<GroupsProvider>(
@@ -36,7 +111,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
           body: SafeArea(
             child: Column(
               children: [
-                const ExpenseHeaderWidget(),
+                _buildDetailHeader(context, groupsProvider),
                 const GroupInfoWidget(),
                 // Main content
                 Expanded(

@@ -445,6 +445,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
               amount: expense.amount,
               payerId: expense.payerId,
               splitAmounts: expense.splitAmounts,
+              payerName: expense.payerName.isNotEmpty ? expense.payerName : null,
             ),
           ),
         );
