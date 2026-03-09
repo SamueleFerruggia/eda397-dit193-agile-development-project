@@ -84,7 +84,10 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
     );
   }
 
-  Widget _buildDetailHeader(BuildContext context, GroupsProvider groupsProvider) {
+  Widget _buildDetailHeader(
+    BuildContext context,
+    GroupsProvider groupsProvider,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
@@ -95,7 +98,11 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
           ),
           const Spacer(),
           IconButton(
-            icon: const Icon(Icons.download, color: AppTheme.textLight, size: 24),
+            icon: const Icon(
+              Icons.download,
+              color: AppTheme.textLight,
+              size: 24,
+            ),
             onPressed: () => _showExportChoice(context, groupsProvider),
           ),
         ],
@@ -125,7 +132,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                     decoration: const BoxDecoration(color: AppTheme.textLight),
                     child: FutureBuilder<List<GroupMember>>(
                       future: groupId != null
-                          ? _firestoreService.getGroupMembers(groupId)
+                          ? FirestoreService().getGroupMembers(groupId)
                           : Future.value([]),
                       builder: (context, memberSnapshot) {
                         // Build a uid -> name map
@@ -142,7 +149,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                         }
 
                         final payerDisplay = displayName(widget.payerId);
-                        final splitType = _getSplitTypeLabel();
+                        final splitType = widget.splitType;
 
                         return SingleChildScrollView(
                           child: Column(
@@ -152,7 +159,9 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
 
                               // Expense item
                               Container(
-                                margin: const EdgeInsets.symmetric(horizontal: 16),
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
@@ -168,7 +177,9 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.05),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.05,
+                                      ),
                                       offset: const Offset(0, 2),
                                       blurRadius: 4,
                                     ),
@@ -202,7 +213,9 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
 
                               // Info section
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 32),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 32,
+                                ),
                                 child: Text(
                                   'Total amount: ${widget.amount.toStringAsFixed(2)} $currency\n'
                                   'Paid by: $payerDisplay\n'
@@ -220,16 +233,21 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
 
                               // Members section
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     ListView.builder(
                                       shrinkWrap: true,
-                                      physics: const NeverScrollableScrollPhysics(),
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
                                       itemCount: widget.splitAmounts.length,
                                       itemBuilder: (context, index) {
-                                        final entries = widget.splitAmounts.entries
+                                        final entries = widget
+                                            .splitAmounts
+                                            .entries
                                             .toList();
                                         final userId = entries[index].key;
                                         final amount = entries[index].value;
@@ -245,13 +263,13 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                             ),
                                             decoration: BoxDecoration(
                                               color: Colors.grey.shade300,
-                                              borderRadius: BorderRadius.circular(
-                                                4,
-                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
                                             ),
                                             child: Row(
                                               mainAxisAlignment:
-                                                  MainAxisAlignment.spaceBetween,
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
                                               children: [
                                                 Text(
                                                   displayName(userId),
@@ -282,7 +300,9 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
 
                               // Buttons
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
                                 child: Column(
                                   children: [
                                     SizedBox(
@@ -294,7 +314,9 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: AppTheme.primary,
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(4),
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
                                           ),
                                         ),
                                         child: const Text(

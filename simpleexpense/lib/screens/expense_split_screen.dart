@@ -189,9 +189,8 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
         description: widget.description,
         amount: widget.amount,
         payerId: widget.payerId,
-        payerName: payerName,
         splitAmounts: validSplits,
-        payerName: payerNameForSave,
+        payerName: payerName,
         splitType: _splitMode,
       );
 
