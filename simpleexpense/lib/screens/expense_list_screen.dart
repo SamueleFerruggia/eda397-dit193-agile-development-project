@@ -15,6 +15,7 @@ import 'settle_screen.dart';
 class ExpenseListScreen extends StatefulWidget {
   final String groupId;
   final bool embedInParent;
+
   /// When set (e.g. by GroupDashboard), the current filtered/sorted list is written here for export.
   final ValueNotifier<List<Expense>?>? expensesForExport;
 
@@ -765,11 +766,11 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
   }
 
   void _navigateToSettleScreen(BuildContext context) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => SettleScreen(groupId: widget.groupId),        ),
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => SettleScreen(groupId: widget.groupId)),
     );
   }
+
   void _navigateToAddExpense(BuildContext context) {
     Navigator.of(
       context,

@@ -10,31 +10,33 @@ void main() {
   // AC-1: Notifications must be delivered reliably across all devices.
 
   group('Reliable delivery across users (AC-1)', () {
-    test('Expense notification is created for every participant except payer',
-        () {
-      const payerId = 'payer_1';
-      const groupMembers = ['payer_1', 'u2', 'u3', 'u4'];
+    test(
+      'Expense notification is created for every participant except payer',
+      () {
+        const payerId = 'payer_1';
+        const groupMembers = ['payer_1', 'u2', 'u3', 'u4'];
 
-      final recipients = groupMembers.where((id) => id != payerId).toList();
+        final recipients = groupMembers.where((id) => id != payerId).toList();
 
-      for (final uid in recipients) {
-        store.addNotification(
-          userId: uid,
-          message: buildExpenseMessage(
-            payerName: 'Alice',
-            description: 'Dinner',
-            amount: 200.0,
-            currency: 'SEK',
-          ),
-          type: NotificationType.expense,
-        );
-      }
+        for (final uid in recipients) {
+          store.addNotification(
+            userId: uid,
+            message: buildExpenseMessage(
+              payerName: 'Alice',
+              description: 'Dinner',
+              amount: 200.0,
+              currency: 'SEK',
+            ),
+            type: NotificationType.expense,
+          );
+        }
 
-      expect(store.getByUser('u2').length, 1);
-      expect(store.getByUser('u3').length, 1);
-      expect(store.getByUser('u4').length, 1);
-      expect(store.getByUser(payerId), isEmpty);
-    });
+        expect(store.getByUser('u2').length, 1);
+        expect(store.getByUser('u3').length, 1);
+        expect(store.getByUser('u4').length, 1);
+        expect(store.getByUser(payerId), isEmpty);
+      },
+    );
 
     test('Settlement notification is sent to both parties', () {
       for (final uid in ['debtor_1', 'creditor_1']) {
@@ -107,30 +109,32 @@ void main() {
       expect(bobNotifs.first.type, NotificationType.settlement);
     });
 
-    test('Group expense broadcast: every member except payer gets notified',
-        () {
-      const payerId = 'payer_1';
-      const members = ['payer_1', 'u2', 'u3', 'u4'];
+    test(
+      'Group expense broadcast: every member except payer gets notified',
+      () {
+        const payerId = 'payer_1';
+        const members = ['payer_1', 'u2', 'u3', 'u4'];
 
-      for (final uid in members.where((id) => id != payerId)) {
-        store.addNotification(
-          userId: uid,
-          message: buildExpenseMessage(
-            payerName: 'Alice',
-            description: 'Dinner',
-            amount: 200.0,
-            currency: 'SEK',
-          ),
-          type: NotificationType.expense,
+        for (final uid in members.where((id) => id != payerId)) {
+          store.addNotification(
+            userId: uid,
+            message: buildExpenseMessage(
+              payerName: 'Alice',
+              description: 'Dinner',
+              amount: 200.0,
+              currency: 'SEK',
+            ),
+            type: NotificationType.expense,
+          );
+        }
+
+        expect(store.allNotifications.length, 3);
+        expect(
+          store.allNotifications.where((n) => n.userId == payerId),
+          isEmpty,
         );
-      }
-
-      expect(store.allNotifications.length, 3);
-      expect(
-        store.allNotifications.where((n) => n.userId == payerId),
-        isEmpty,
-      );
-    });
+      },
+    );
   });
 
   // AC-2: Timing of notifications should be accurate.
@@ -473,13 +477,15 @@ class InMemoryNotificationStore {
     required NotificationType type,
     DateTime? createdAt,
   }) {
-    _notifications.add(Notification(
-      id: 'notif_${++_idCounter}',
-      userId: userId,
-      message: message,
-      type: type,
-      createdAt: createdAt ?? DateTime.now(),
-    ));
+    _notifications.add(
+      Notification(
+        id: 'notif_${++_idCounter}',
+        userId: userId,
+        message: message,
+        type: type,
+        createdAt: createdAt ?? DateTime.now(),
+      ),
+    );
   }
 
   List<Notification> getByUser(String userId) {

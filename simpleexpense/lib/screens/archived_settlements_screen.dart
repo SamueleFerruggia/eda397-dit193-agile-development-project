@@ -65,7 +65,11 @@ class ArchivedSettlementsScreen extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.history, size: 64, color: Colors.grey.shade400),
+                      Icon(
+                        Icons.history,
+                        size: 64,
+                        color: Colors.grey.shade400,
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         'No archived settlements yet',
@@ -83,7 +87,11 @@ class ArchivedSettlementsScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 itemCount: archives.length,
                 itemBuilder: (context, index) {
-                  return _buildArchiveCard(context, archives[index], memberNames);
+                  return _buildArchiveCard(
+                    context,
+                    archives[index],
+                    memberNames,
+                  );
                 },
               );
             },
@@ -100,8 +108,9 @@ class ArchivedSettlementsScreen extends StatelessWidget {
   ) {
     final amount = (archive['amount'] as num?)?.toDouble() ?? 0.0;
     final archivedAt = (archive['archivedAt'] as Timestamp?)?.toDate();
-    final involvedUsers =
-        List<String>.from(archive['involvedUsers'] as List? ?? []);
+    final involvedUsers = List<String>.from(
+      archive['involvedUsers'] as List? ?? [],
+    );
     final isSettlementRecord = archive['type'] == 'settlement';
 
     // Format the archived date
@@ -157,7 +166,11 @@ class ArchivedSettlementsScreen extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               '$debtorName paid $creditorName',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppTheme.secondaryDark),
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: AppTheme.secondaryDark,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
