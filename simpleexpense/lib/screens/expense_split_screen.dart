@@ -179,12 +179,19 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
         throw Exception("At least one person must have an amount assigned");
       }
 
+      final payerMemberForName = _members
+          .where((m) => m.uid == widget.payerId)
+          .firstOrNull;
+      final payerNameForSave = payerMemberForName?.name ?? '';
+
       await FirestoreService().addExpense(
         groupId: groupId,
         description: widget.description,
         amount: widget.amount,
         payerId: widget.payerId,
         splitAmounts: validSplits,
+        payerName: payerNameForSave,
+        splitType: _splitMode,
       );
 
       // Notify each user involved in the expense (except the submitter)

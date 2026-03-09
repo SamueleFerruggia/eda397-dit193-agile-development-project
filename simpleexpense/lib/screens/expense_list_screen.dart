@@ -8,6 +8,7 @@ import 'package:simpleexpense/screens/expense_detail_screen.dart';
 import 'package:simpleexpense/theme/app_theme.dart';
 import 'package:simpleexpense/screens/widgets/expense_widgets.dart';
 import '../models/models.dart';
+import '../services/firestore_service.dart';
 import 'settle_screen.dart';
 
 /// Comprehensive Expense List Screen
@@ -34,13 +35,28 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
   String _filterType = 'All';
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  Map<String, String> _memberNames = {};
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<GroupsProvider>().selectGroup(widget.groupId);
+      _loadMemberNames();
     });
+  }
+
+  Future<void> _loadMemberNames() async {
+    try {
+      final members = await FirestoreService().getGroupMembers(widget.groupId);
+      if (mounted) {
+        setState(() {
+          _memberNames = {
+            for (final m in members) m.uid: m.name,
+          };
+        });
+      }
+    } catch (_) {}
   }
 
   @override
@@ -433,7 +449,14 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
         '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
 
     // Determine if paid by current user
-    final payerName = isPaidByMe ? 'You' : 'Member';
+    String payerName;
+    if (isPaidByMe) {
+      payerName = 'You';
+    } else if (expense.payerName.isNotEmpty) {
+      payerName = expense.payerName;
+    } else {
+      payerName = _memberNames[expense.payerId] ?? 'Member';
+    }
 
     return GestureDetector(
       onTap: () {
@@ -444,6 +467,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
               amount: expense.amount,
               payerId: expense.payerId,
               splitAmounts: expense.splitAmounts,
+              splitType: expense.splitType,
             ),
           ),
         );
