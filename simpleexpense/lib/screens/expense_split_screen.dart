@@ -191,6 +191,8 @@ class _ExpenseSplitScreenState extends State<ExpenseSplitScreen> {
         payerId: widget.payerId,
         payerName: payerName,
         splitAmounts: validSplits,
+        payerName: payerNameForSave,
+        splitType: _splitMode,
       );
 
       // Notify each user involved in the expense (except the submitter)
