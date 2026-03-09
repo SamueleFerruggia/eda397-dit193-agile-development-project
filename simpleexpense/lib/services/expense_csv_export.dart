@@ -57,11 +57,51 @@ String _buildCsv(List<Expense> expenses, String currency) {
         _escapeCsv(e.description),
         e.amount.toStringAsFixed(2),
         currency,
-        _escapeCsv(e.payerName),
+        _escapeCsv(e.payerName.isNotEmpty ? e.payerName : 'Unknown'),
         e.splitAmounts.length.toString(),
         _escapeCsv(e.category),
       ].join(','),
     );
   }
   return buffer.toString();
+}
+
+/// Builds a CSV for a single expense's split details and exports via share sheet.
+Future<bool> exportExpenseDetailToCsv({
+  required BuildContext context,
+  required String description,
+  required double amount,
+  required String currency,
+  required String payerId,
+  required Map<String, double> splitAmounts,
+  String? payerName,
+  DateTime? timestamp,
+}) async {
+  final paidBy = payerName?.isNotEmpty == true ? payerName! : 'Unknown';
+  final buffer = StringBuffer();
+  buffer.writeln('Expense detail export');
+  buffer.writeln('Description,${_escapeCsv(description)}');
+  buffer.writeln('Total amount,${amount.toStringAsFixed(2)},$currency');
+  buffer.writeln('Paid by,${_escapeCsv(paidBy)}');
+  buffer.writeln('Split count,${splitAmounts.length}');
+  buffer.writeln();
+  buffer.writeln('Participant,Amount ($currency)');
+  for (final e in splitAmounts.entries) {
+    buffer.writeln('${_escapeCsv(e.key)},${e.value.toStringAsFixed(2)}');
+  }
+
+  final dir = await getTemporaryDirectory();
+  final fileName =
+      'expense_detail_${DateTime.now().toIso8601String().replaceAll(':', '-').split('.').first}.csv';
+  final file = File('${dir.path}/$fileName');
+  await file.writeAsString(buffer.toString(), flush: true);
+
+  await SharePlus.instance.share(
+    ShareParams(
+      files: [XFile(file.path)],
+      subject: 'Expense detail export',
+      text: 'Expense: $description',
+    ),
+  );
+  return true;
 }
