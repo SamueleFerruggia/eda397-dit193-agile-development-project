@@ -263,21 +263,26 @@ class GroupInfoWidget extends StatelessWidget {
                   statusColor = AppTheme.textDark;
                 }
 
-                final totalAmount = expenses.fold(
+                // Exclude settlement expenses from statistics
+                final realExpenses = expenses
+                    .where((e) => !e.isSettlement)
+                    .toList();
+
+                final totalAmount = realExpenses.fold(
                   0.0,
                   (acc, e) => acc + e.amount,
                 );
-                final myExpensesCount = expenses
+                final myExpensesCount = realExpenses
                     .where((e) => e.payerId == currentUserId)
                     .length;
-                final othersCount = expenses.length - myExpensesCount;
+                final othersCount = realExpenses.length - myExpensesCount;
 
                 return _buildGroupInfoContainer(
                   context,
                   groupName: groupsProvider.currentGroupName ?? 'Group Name',
                   statusText: statusText,
                   statusColor: statusColor,
-                  totalCount: expenses.length,
+                  totalCount: realExpenses.length,
                   myCount: myExpensesCount,
                   othersCount: othersCount,
                   totalAmount: totalAmount,

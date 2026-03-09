@@ -370,6 +370,8 @@ class FirestoreService {
     required String payerId,
     required String payerName,
     required Map<String, double> splitAmounts, // Map of userId -> amount
+    String payerName = '',
+    String splitType = '',
   }) async {
     await _db.collection('groups').doc(groupId).collection('expenses').add({
       'description': description,
@@ -377,6 +379,7 @@ class FirestoreService {
       'payerId': payerId,
       'payerName': payerName,
       'splitAmounts': splitAmounts,
+      'splitType': splitType,
       'timestamp': FieldValue.serverTimestamp(),
     });
   }
@@ -389,6 +392,8 @@ class FirestoreService {
     required String payerId,
     required String payerName,
     required Map<String, double> splitAmounts,
+    String payerName = '',
+    String splitType = '',
   }) async {
     await _db
         .collection('groups')
@@ -401,6 +406,7 @@ class FirestoreService {
           'payerId': payerId,
           'payerName': payerName,
           'splitAmounts': splitAmounts,
+          'splitType': splitType,
           'updatedAt': FieldValue.serverTimestamp(),
         });
   }

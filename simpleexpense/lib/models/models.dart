@@ -125,6 +125,7 @@ class Expense {
   final DateTime timestamp;
   final DateTime? updatedAt;
   final bool isSettlement;
+  final String splitType;
 
   Expense({
     required this.id,
@@ -141,6 +142,7 @@ class Expense {
     required this.timestamp,
     this.updatedAt,
     this.isSettlement = false,
+    this.splitType = '',
   });
 
   factory Expense.fromFirestore(DocumentSnapshot doc) {
@@ -180,6 +182,7 @@ class Expense {
       timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
       isSettlement: data['isSettlement'] == true,
+      splitType: data['splitType'] ?? '',
     );
   }
 
@@ -195,6 +198,7 @@ class Expense {
       'category': category,
       'notes': notes,
       'receiptUrl': receiptUrl,
+      'splitType': splitType,
       'timestamp': Timestamp.fromDate(timestamp),
       'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
     };
@@ -227,6 +231,7 @@ class Expense {
     DateTime? timestamp,
     DateTime? updatedAt,
     bool? isSettlement,
+    String? splitType,
   }) {
     return Expense(
       id: id ?? this.id,
@@ -243,6 +248,7 @@ class Expense {
       timestamp: timestamp ?? this.timestamp,
       updatedAt: updatedAt ?? this.updatedAt,
       isSettlement: isSettlement ?? this.isSettlement,
+      splitType: splitType ?? this.splitType,
     );
   }
 
