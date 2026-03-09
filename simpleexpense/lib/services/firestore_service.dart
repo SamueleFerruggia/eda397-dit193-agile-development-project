@@ -368,6 +368,7 @@ class FirestoreService {
     required String description,
     required double amount,
     required String payerId,
+    required String payerName,
     required Map<String, double> splitAmounts, // Map of userId -> amount
     String payerName = '',
     String splitType = '',
@@ -389,6 +390,7 @@ class FirestoreService {
     required String description,
     required double amount,
     required String payerId,
+    required String payerName,
     required Map<String, double> splitAmounts,
     String payerName = '',
     String splitType = '',

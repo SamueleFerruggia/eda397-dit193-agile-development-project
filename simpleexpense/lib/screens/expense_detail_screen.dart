@@ -6,6 +6,8 @@ import 'package:simpleexpense/services/firestore_service.dart';
 import 'package:simpleexpense/theme/app_theme.dart';
 import 'package:simpleexpense/screens/widgets/expense_widgets.dart';
 import '../models/models.dart';
+import 'package:simpleexpense/services/expense_pdf_export.dart';
+import 'package:simpleexpense/services/expense_csv_export.dart';
 
 class ExpenseDetailScreen extends StatefulWidget {
   final String description;
@@ -13,6 +15,7 @@ class ExpenseDetailScreen extends StatefulWidget {
   final String payerId;
   final Map<String, double> splitAmounts; // Map of userId -> amount
   final String splitType;
+  final String? payerName;
 
   const ExpenseDetailScreen({
     super.key,
@@ -21,6 +24,7 @@ class ExpenseDetailScreen extends StatefulWidget {
     required this.payerId,
     required this.splitAmounts,
     this.splitType = '',
+    this.payerName,
   });
 
   @override
@@ -28,27 +32,75 @@ class ExpenseDetailScreen extends StatefulWidget {
 }
 
 class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
-  final FirestoreService _firestoreService = FirestoreService();
+  void _showExportChoice(BuildContext context, GroupsProvider groupsProvider) {
+    final currency = groupsProvider.currentCurrency ?? 'SEK';
+    final groupName = groupsProvider.currentGroupName;
 
-  /// Get the display label for the split type
-  String _getSplitTypeLabel() {
-    switch (widget.splitType) {
-      case 'Equally':
-        return 'Equal';
-      case 'Exact Amount':
-        return 'Exact Amount';
-      case 'Percentage':
-        return 'Percentage';
-      default:
-        // Fallback for old expenses without splitType stored
-        if (widget.splitType.isNotEmpty) return widget.splitType;
-        final amounts = widget.splitAmounts.values.toList();
-        if (amounts.isEmpty) return 'No split';
-        if (amounts.length == 1) return 'Equal';
-        final first = amounts.first;
-        final allEqual = amounts.every((a) => (a - first).abs() < 0.01);
-        return allEqual ? 'Equal' : 'Custom amounts';
-    }
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppTheme.background,
+        title: const Text('Export expense detail'),
+        content: const Text('Choose export format'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton.icon(
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+              await exportExpenseDetailToPdf(
+                description: widget.description,
+                amount: widget.amount,
+                currency: currency,
+                payerId: widget.payerId,
+                splitAmounts: widget.splitAmounts,
+                payerName: widget.payerName,
+                groupName: groupName,
+              );
+            },
+            icon: const Icon(Icons.picture_as_pdf, size: 20),
+            label: const Text('PDF'),
+          ),
+          FilledButton.icon(
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+              await exportExpenseDetailToCsv(
+                context: context,
+                description: widget.description,
+                amount: widget.amount,
+                currency: currency,
+                payerId: widget.payerId,
+                splitAmounts: widget.splitAmounts,
+                payerName: widget.payerName,
+              );
+            },
+            icon: const Icon(Icons.table_chart, size: 20),
+            label: const Text('CSV'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailHeader(BuildContext context, GroupsProvider groupsProvider) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppTheme.textLight),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          const Spacer(),
+          IconButton(
+            icon: const Icon(Icons.download, color: AppTheme.textLight, size: 24),
+            onPressed: () => _showExportChoice(context, groupsProvider),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -64,7 +116,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
           body: SafeArea(
             child: Column(
               children: [
-                const ExpenseHeaderWidget(),
+                _buildDetailHeader(context, groupsProvider),
                 const GroupInfoWidget(),
                 // Main content
                 Expanded(
