@@ -6,6 +6,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 
 import '../models/models.dart';
+import 'firestore_service.dart';
 
 /// Builds a PDF from a list of expenses and exports it via the share sheet.
 /// Returns true if export was started, false if list was empty.
@@ -94,8 +95,10 @@ Future<bool> exportExpenseDetailToPdf({
   String? groupName,
   DateTime? timestamp,
 }) async {
+  final userIdToName = await FirestoreService().getUserNames(splitAmounts.keys.toList());
+
   final pdf = pw.Document();
-  final paidBy = payerName?.isNotEmpty == true ? payerName! : 'Unknown';
+  final paidBy = payerName?.isNotEmpty == true ? payerName! : (userIdToName[payerId] ?? payerId);
 
   final summaryData = <List<String>>[
     ['Description', description],
@@ -107,7 +110,7 @@ Future<bool> exportExpenseDetailToPdf({
   final splitRows = <List<String>>[
     ['Participant', 'Amount ($currency)'],
     ...splitAmounts.entries.map(
-      (e) => [e.key, e.value.toStringAsFixed(2)],
+      (e) => [userIdToName[e.key] ?? e.key, e.value.toStringAsFixed(2)],
     ),
   ];
 
