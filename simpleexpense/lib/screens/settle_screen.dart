@@ -22,6 +22,7 @@ class _SettleScreenState extends State<SettleScreen> {
   double _amount = 0.0;
   String? _debtorId;
   final FirestoreService _firestoreService = FirestoreService();
+  bool _hasPendingRequest = false;
 
   @override
   Widget build(BuildContext context) {
@@ -80,8 +81,20 @@ class _SettleScreenState extends State<SettleScreen> {
                       _amount = 0.0;
                       _debtorId = null;
                       _infoMessage = null;
+                      _hasPendingRequest = false;
                     });
                     if (value != null && currentUserId != null) {
+                      // Check for pending request
+                      final hasPending = await _firestoreService.hasPendingSettleRequest(
+                        groupId: widget.groupId,
+                        fromUserId: currentUserId,
+                        toUserId: value,
+                      );
+                      if (mounted) {
+                        setState(() {
+                          _hasPendingRequest = hasPending;
+                        });
+                      }
                       final debt = await _firestoreService.getPairwiseDebt(
                         groupId: widget.groupId,
                         userA: currentUserId,
@@ -120,12 +133,19 @@ class _SettleScreenState extends State<SettleScreen> {
                 ],
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
-                  onPressed: _selectedUserId == null || _isSubmitting || _amount < 0.01
+                  onPressed: _selectedUserId == null || _isSubmitting || _amount < 0.01 || _hasPendingRequest
                       ? null
                       : _onSettlePressed,
                   icon: const Icon(Icons.handshake),
                   label: const Text('Send Settlement Request'),
                 ),
+                if (_hasPendingRequest) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    'A settlement request is already pending with this member.',
+                    style: const TextStyle(color: Colors.orange),
+                  ),
+                ],
                 if (_infoMessage != null) ...[
                   const SizedBox(height: 24),
                   Text(
