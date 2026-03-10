@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../models/models.dart';
+import 'firestore_service.dart';
 
 /// Builds a CSV string from a list of expenses and exports it via the share sheet.
 /// Returns true if export was started, false if list was empty.
@@ -77,7 +78,9 @@ Future<bool> exportExpenseDetailToCsv({
   String? payerName,
   DateTime? timestamp,
 }) async {
-  final paidBy = payerName?.isNotEmpty == true ? payerName! : 'Unknown';
+  final userIdToName = await FirestoreService().getUserNames(splitAmounts.keys.toList());
+  final paidBy = payerName?.isNotEmpty == true ? payerName! : (userIdToName[payerId] ?? payerId);
+
   final buffer = StringBuffer();
   buffer.writeln('Expense detail export');
   buffer.writeln('Description,${_escapeCsv(description)}');
@@ -87,7 +90,8 @@ Future<bool> exportExpenseDetailToCsv({
   buffer.writeln();
   buffer.writeln('Participant,Amount ($currency)');
   for (final e in splitAmounts.entries) {
-    buffer.writeln('${_escapeCsv(e.key)},${e.value.toStringAsFixed(2)}');
+    final displayName = userIdToName[e.key] ?? e.key;
+    buffer.writeln('${_escapeCsv(displayName)},${e.value.toStringAsFixed(2)}');
   }
 
   final dir = await getTemporaryDirectory();

@@ -17,6 +17,25 @@ class FirestoreService {
     return data?['name'] as String?;
   }
 
+  /// Returns a map of userId -> display name for the given user IDs.
+  /// Missing or unnamed users are left as userId in the map.
+  Future<Map<String, String>> getUserNames(List<String> userIds) async {
+    if (userIds.isEmpty) return {};
+    final Map<String, String> result = {};
+    for (var i = 0; i < userIds.length; i += 10) {
+      final chunk = userIds.length > i + 10 ? userIds.sublist(i, i + 10) : userIds.sublist(i);
+      final snapshot = await _db.collection('users').where(FieldPath.documentId, whereIn: chunk).get();
+      for (final doc in snapshot.docs) {
+        final name = doc.data()['name'] as String?;
+        result[doc.id] = name?.isNotEmpty == true ? name! : doc.id;
+      }
+    }
+    for (final uid in userIds) {
+      result.putIfAbsent(uid, () => uid);
+    }
+    return result;
+  }
+
   Future<void> saveUser(
     String uid,
     String email,
