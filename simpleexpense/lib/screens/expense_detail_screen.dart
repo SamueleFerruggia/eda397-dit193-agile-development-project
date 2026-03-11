@@ -129,7 +129,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                 Expanded(
                   child: Container(
                     width: double.infinity,
-                    decoration: const BoxDecoration(color: AppTheme.textLight),
+                    color: AppTheme.background,
                     child: FutureBuilder<List<GroupMember>>(
                       future: groupId != null
                           ? FirestoreService().getGroupMembers(groupId)
@@ -164,24 +164,15 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                 ),
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  border: Border(
-                                    left: BorderSide(
-                                      color: Colors.grey[400]!,
-                                      width: 8,
-                                    ),
-                                  ),
-                                  borderRadius: const BorderRadius.only(
-                                    topRight: Radius.circular(4),
-                                    bottomRight: Radius.circular(4),
-                                  ),
+                                  color: AppTheme.textLight,
+                                  borderRadius: BorderRadius.circular(12),
                                   boxShadow: [
                                     BoxShadow(
                                       color: Colors.black.withValues(
                                         alpha: 0.05,
                                       ),
                                       offset: const Offset(0, 2),
-                                      blurRadius: 4,
+                                      blurRadius: 6,
                                     ),
                                   ],
                                 ),
@@ -262,9 +253,17 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                               vertical: 8,
                                             ),
                                             decoration: BoxDecoration(
-                                              color: Colors.grey.shade300,
+                                              color: AppTheme.textLight,
                                               borderRadius:
-                                                  BorderRadius.circular(4),
+                                                  BorderRadius.circular(12),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withValues(alpha: 0.05),
+                                                  offset: const Offset(0, 2),
+                                                  blurRadius: 6,
+                                                ),
+                                              ],
                                             ),
                                             child: Row(
                                               mainAxisAlignment:
@@ -315,7 +314,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                                           backgroundColor: AppTheme.primary,
                                           shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(
-                                              4,
+                                              8,
                                             ),
                                           ),
                                         ),

@@ -257,7 +257,7 @@ class GroupInfoWidget extends StatelessWidget {
                 } else if (isNegative) {
                   statusText =
                       'You owe ${(-myBalance).toStringAsFixed(2)} $currency';
-                  statusColor = AppTheme.primaryDark;
+                  statusColor = AppTheme.error;
                 } else {
                   statusText = 'Settled up';
                   statusColor = AppTheme.textDark;
@@ -315,65 +315,78 @@ class GroupInfoWidget extends StatelessWidget {
         currency != null;
 
     return Container(
-      color: Colors.grey[300],
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(color: AppTheme.background),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppTheme.textLight,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            offset: const Offset(0, 2),
+            blurRadius: 6,
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  groupName,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textDark,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  statusText,
-                  style: TextStyle(
-                    fontFamily: AppTheme.fontFamilyDisplay,
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: statusColor,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (hasStats)
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildHeaderStatChip(
-                  Icons.receipt_long,
-                  '$totalCount',
-                  'Total',
-                ),
-                const SizedBox(width: 6),
-                _buildHeaderStatChip(Icons.person, '$myCount', 'Mine'),
-                const SizedBox(width: 6),
-                _buildHeaderStatChip(Icons.people, '$othersCount', 'Others'),
-                const SizedBox(width: 6),
-                _buildHeaderStatChip(
-                  Icons.attach_money,
-                  totalAmount.toStringAsFixed(0),
-                  currency,
-                ),
-              ],
-            ),
         ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(color: AppTheme.background),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    groupName,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textDark,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    statusText,
+                    style: TextStyle(
+                      fontFamily: AppTheme.fontFamilyDisplay,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: statusColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (hasStats)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildHeaderStatChip(
+                    Icons.receipt_long,
+                    '$totalCount',
+                    'Total',
+                  ),
+                  const SizedBox(width: 6),
+                  _buildHeaderStatChip(Icons.person, '$myCount', 'Mine'),
+                  const SizedBox(width: 6),
+                  _buildHeaderStatChip(Icons.people, '$othersCount', 'Others'),
+                  const SizedBox(width: 6),
+                  _buildHeaderStatChip(
+                    Icons.attach_money,
+                    totalAmount.toStringAsFixed(0),
+                    currency,
+                  ),
+                ],
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -511,7 +524,7 @@ class GroupBalanceStatusWidget extends StatelessWidget {
                 } else if (isNegative) {
                   statusText = 'You owe $displayGroupName';
                   amountText = '${(-myBalance).toStringAsFixed(0)} $currency';
-                  statusColor = AppTheme.primaryDark;
+                  statusColor = AppTheme.error;
                 } else {
                   statusText = 'Settled up';
                   amountText = '';

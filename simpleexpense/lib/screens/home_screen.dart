@@ -526,244 +526,255 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, groupsProvider, _) {
         final groups = groupsProvider.groups;
         return Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Text(
-                  'All Groups',
-                  style: TextStyle(
-                    fontFamily: AppTheme.fontFamilyDisplay,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+          child: Container(
+            color: AppTheme.background,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: Text(
+                    'All Groups',
+                    style: TextStyle(
+                      fontFamily: AppTheme.fontFamilyDisplay,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
                   ),
                 ),
-              ),
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(0),
-                  itemCount: groups.length,
-                  itemBuilder: (context, index) {
-                    final group = groups[index];
-                    final name = group.name;
-                    final currency = group.currency;
-                    final groupId = group.id;
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(0),
+                    itemCount: groups.length,
+                    itemBuilder: (context, index) {
+                      final group = groups[index];
+                      final name = group.name;
+                      final currency = group.currency;
+                      final groupId = group.id;
 
-                    return Consumer<AuthProvider>(
-                      builder: (context, authProvider, _) {
-                        final currentUserId = authProvider.currentUserId;
-                        return StreamBuilder<QuerySnapshot>(
-                          stream: FirebaseFirestore.instance
-                              .collection('groups')
-                              .doc(groupId)
-                              .collection('expenses')
-                              .snapshots(),
-                          builder: (context, expenseSnapshot) {
-                            Color cardColor = Colors.grey.shade300;
-                            if (expenseSnapshot.hasData &&
-                                currentUserId != null) {
-                              final expenses = expenseSnapshot.data!.docs
-                                  .map((doc) => Expense.fromFirestore(doc))
-                                  .toList();
-                              final firestoreService = FirestoreService();
-                              final balanceService = BalanceService();
-                              return FutureBuilder<List<GroupMember>>(
-                                future: firestoreService.getGroupMembers(
-                                  groupId,
-                                ),
-                                builder: (context, memberSnapshot) {
-                                  if (memberSnapshot.hasData) {
-                                    final members = memberSnapshot.data!;
-                                    final balances = balanceService
-                                        .calculateNetBalances(
-                                          expenses,
-                                          members,
-                                        );
-                                    final myBalance =
-                                        balances[currentUserId] ?? 0.0;
-                                    if (myBalance > 0.01) {
-                                      cardColor = Colors.green.shade400;
-                                    } else if (myBalance < -0.01) {
-                                      cardColor = Colors.red.shade400;
+                      return Consumer<AuthProvider>(
+                        builder: (context, authProvider, _) {
+                          final currentUserId = authProvider.currentUserId;
+                          return StreamBuilder<QuerySnapshot>(
+                            stream: FirebaseFirestore.instance
+                                .collection('groups')
+                                .doc(groupId)
+                                .collection('expenses')
+                                .snapshots(),
+                            builder: (context, expenseSnapshot) {
+                              Color cardColor = Colors.grey.shade300;
+                              if (expenseSnapshot.hasData &&
+                                  currentUserId != null) {
+                                final expenses = expenseSnapshot.data!.docs
+                                    .map((doc) => Expense.fromFirestore(doc))
+                                    .toList();
+                                final firestoreService = FirestoreService();
+                                final balanceService = BalanceService();
+                                return FutureBuilder<List<GroupMember>>(
+                                  future: firestoreService.getGroupMembers(
+                                    groupId,
+                                  ),
+                                  builder: (context, memberSnapshot) {
+                                    if (memberSnapshot.hasData) {
+                                      final members = memberSnapshot.data!;
+                                      final balances = balanceService
+                                          .calculateNetBalances(
+                                            expenses,
+                                            members,
+                                          );
+                                      final myBalance =
+                                          balances[currentUserId] ?? 0.0;
+                                      if (myBalance > 0.01) {
+                                        cardColor = AppTheme.success;
+                                      } else if (myBalance < -0.01) {
+                                        cardColor = AppTheme.error;
+                                      }
                                     }
-                                  }
-                                  return GestureDetector(
-                                    onTap: () {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (_) => GroupDashboardScreen(
-                                            groupId: groupId,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    child: Container(
-                                      margin: const EdgeInsets.symmetric(
-                                        vertical: 8,
-                                        horizontal: 16,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(6),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withValues(
-                                              alpha: 0.06,
-                                            ),
-                                            blurRadius: 4,
-                                            offset: const Offset(0, 1),
-                                          ),
-                                        ],
-                                      ),
-                                      child: IntrinsicHeight(
-                                        child: Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.stretch,
-                                          children: [
-                                            Container(
-                                              width: 64,
-                                              decoration: BoxDecoration(
-                                                color: cardColor,
-                                                borderRadius:
-                                                    const BorderRadius.horizontal(
-                                                      left: Radius.circular(2),
-                                                    ),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 14),
-                                            Expanded(
-                                              child: Padding(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      vertical: 14,
-                                                    ),
-                                                child: Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    Text(
-                                                      name,
-                                                      style: const TextStyle(
-                                                        fontSize: 17,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color: Color(
-                                                          0xFF333333,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    const SizedBox(height: 6),
-                                                    GroupBalanceStatusWidget(
-                                                      groupId: groupId,
-                                                      currency: currency,
-                                                      groupName: name,
-                                                    ),
-                                                  ],
+                                    return GestureDetector(
+                                      onTap: () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                GroupDashboardScreen(
+                                                  groupId: groupId,
                                                 ),
+                                          ),
+                                        );
+                                      },
+                                      child: Container(
+                                        margin: const EdgeInsets.symmetric(
+                                          vertical: 8,
+                                          horizontal: 16,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(
+                                                alpha: 0.06,
                                               ),
+                                              blurRadius: 4,
+                                              offset: const Offset(0, 1),
                                             ),
-                                            const SizedBox(width: 16),
                                           ],
                                         ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              );
-                            }
-                            return GestureDetector(
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        GroupDashboardScreen(groupId: groupId),
-                                  ),
-                                );
-                              },
-                              child: Container(
-                                margin: const EdgeInsets.symmetric(
-                                  vertical: 8,
-                                  horizontal: 16,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(6),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(
-                                        alpha: 0.06,
-                                      ),
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 1),
-                                    ),
-                                  ],
-                                ),
-                                child: IntrinsicHeight(
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      Container(
-                                        width: 64,
-                                        decoration: BoxDecoration(
-                                          color: cardColor,
-                                          borderRadius:
-                                              const BorderRadius.horizontal(
-                                                left: Radius.circular(2),
-                                              ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 14),
-                                      Expanded(
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 14,
-                                          ),
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
+                                        child: IntrinsicHeight(
+                                          child: Row(
                                             crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            mainAxisSize: MainAxisSize.min,
+                                                CrossAxisAlignment.stretch,
                                             children: [
-                                              Text(
-                                                name,
-                                                style: const TextStyle(
-                                                  fontSize: 17,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Color(0xFF333333),
+                                              Container(
+                                                width: 64,
+                                                decoration: BoxDecoration(
+                                                  color: cardColor,
+                                                  borderRadius:
+                                                      const BorderRadius.horizontal(
+                                                        left: Radius.circular(
+                                                          2,
+                                                        ),
+                                                      ),
                                                 ),
                                               ),
-                                              const SizedBox(height: 6),
-                                              GroupBalanceStatusWidget(
-                                                groupId: groupId,
-                                                currency: currency,
-                                                groupName: name,
+                                              const SizedBox(width: 14),
+                                              Expanded(
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        vertical: 14,
+                                                      ),
+                                                  child: Column(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      Text(
+                                                        name,
+                                                        style: const TextStyle(
+                                                          fontSize: 17,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: Color(
+                                                            0xFF333333,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 6),
+                                                      GroupBalanceStatusWidget(
+                                                        groupId: groupId,
+                                                        currency: currency,
+                                                        groupName: name,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
                                               ),
+                                              const SizedBox(width: 16),
                                             ],
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(width: 16),
+                                    );
+                                  },
+                                );
+                              }
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => GroupDashboardScreen(
+                                        groupId: groupId,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  margin: const EdgeInsets.symmetric(
+                                    vertical: 8,
+                                    horizontal: 16,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(6),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.06,
+                                        ),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 1),
+                                      ),
                                     ],
                                   ),
+                                  child: IntrinsicHeight(
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        Container(
+                                          width: 64,
+                                          decoration: BoxDecoration(
+                                            color: cardColor,
+                                            borderRadius:
+                                                const BorderRadius.horizontal(
+                                                  left: Radius.circular(2),
+                                                ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 14),
+                                        Expanded(
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 14,
+                                            ),
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text(
+                                                  name,
+                                                  style: const TextStyle(
+                                                    fontSize: 17,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Color(0xFF333333),
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 6),
+                                                GroupBalanceStatusWidget(
+                                                  groupId: groupId,
+                                                  currency: currency,
+                                                  groupName: name,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 16),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    );
-                  },
+                              );
+                            },
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },

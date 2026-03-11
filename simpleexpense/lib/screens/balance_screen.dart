@@ -92,6 +92,11 @@ class _BalanceScreenState extends State<BalanceScreen> {
                             Row(
                               children: [
                                 ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
                                   onPressed: () async {
                                     // First mark the request as accepted
                                     await _firestoreService
@@ -121,6 +126,11 @@ class _BalanceScreenState extends State<BalanceScreen> {
                                 ),
                                 const SizedBox(width: 12),
                                 OutlinedButton(
+                                  style: OutlinedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
                                   onPressed: () async {
                                     await _firestoreService
                                         .updateSettleRequestStatus(
@@ -185,7 +195,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
         final content = Container(
           width: double.infinity,
           height: double.infinity,
-          color: AppTheme.textLight,
+          color: AppTheme.background,
           child: Column(
             children: [
               Expanded(child: _buildBalanceView(context, groupsProvider)),
@@ -461,29 +471,48 @@ class _BalanceScreenState extends State<BalanceScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.green.shade50,
+        color: AppTheme.textLight,
         borderRadius: BorderRadius.circular(12),
+        border: const Border(
+          left: BorderSide(color: AppTheme.success, width: 4),
+          top: BorderSide(color: Colors.transparent),
+          right: BorderSide(color: Colors.transparent),
+          bottom: BorderSide(color: Colors.transparent),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            offset: const Offset(0, 2),
+            blurRadius: 6,
+          ),
+        ],
       ),
       child: Row(
         children: [
-          Icon(Icons.celebration, color: Colors.green.shade700, size: 32),
+          Icon(Icons.celebration, color: AppTheme.success, size: 32),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   'All Settled Up!',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.green.shade700,
+                    color: AppTheme.success,
+                    fontFamily: AppTheme.fontFamilyDisplay,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Everyone is even in this group',
-                  style: TextStyle(fontSize: 14, color: AppTheme.secondaryDark),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF5A5A5A),
+                    fontFamily: AppTheme.fontFamilyBody,
+                  ),
                 ),
               ],
             ),
