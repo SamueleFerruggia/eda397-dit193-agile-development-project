@@ -52,9 +52,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
       final members = await FirestoreService().getGroupMembers(widget.groupId);
       if (mounted) {
         setState(() {
-          _memberNames = {
-            for (final m in members) m.uid: m.name,
-          };
+          _memberNames = {for (final m in members) m.uid: m.name};
         });
       }
     } catch (_) {}
@@ -469,7 +467,9 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
               payerId: expense.payerId,
               splitAmounts: expense.splitAmounts,
               splitType: expense.splitType,
-              payerName: expense.payerName.isNotEmpty ? expense.payerName : null,
+              payerName: expense.payerName.isNotEmpty
+                  ? expense.payerName
+                  : null,
             ),
           ),
         );
@@ -477,10 +477,10 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: AppTheme.background,
+          color: AppTheme.textLight,
           border: Border(
             left: BorderSide(
-              color: isPaidByMe ? Colors.green : Colors.blue,
+              color: isPaidByMe ? AppTheme.success : AppTheme.error,
               width: 4,
             ),
           ),
@@ -506,13 +506,13 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                 height: 48,
                 decoration: BoxDecoration(
                   color: isPaidByMe
-                      ? Colors.green.withValues(alpha: 0.1)
-                      : Colors.blue.withValues(alpha: 0.1),
+                      ? AppTheme.success.withValues(alpha: 0.1)
+                      : AppTheme.error.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   isPaidByMe ? Icons.arrow_upward : Icons.arrow_downward,
-                  color: isPaidByMe ? Colors.green : Colors.blue,
+                  color: isPaidByMe ? AppTheme.success : AppTheme.error,
                   size: 24,
                 ),
               ),
@@ -580,7 +580,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: isPaidByMe ? Colors.green : Colors.blue,
+                      color: isPaidByMe ? AppTheme.success : AppTheme.error,
                     ),
                   ),
                   Text(

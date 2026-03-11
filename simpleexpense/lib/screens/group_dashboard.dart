@@ -62,7 +62,9 @@ class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
                 ExpenseHeaderWidget(expensesForExport: _expensesForExport),
                 const GroupInfoWidget(),
                 Expanded(
-                  child: IndexedStack(
+                  child: Container(
+                    color: AppTheme.background,
+                    child: IndexedStack(
                     index: _selectedIndex,
                     children: [
                       ExpenseListScreen(
@@ -76,6 +78,7 @@ class _GroupDashboardScreenState extends State<GroupDashboardScreen> {
                       ),
                     ],
                   ),
+                ),
                 ),
               ],
             ),
