@@ -473,12 +473,6 @@ class _BalanceScreenState extends State<BalanceScreen> {
       decoration: BoxDecoration(
         color: AppTheme.textLight,
         borderRadius: BorderRadius.circular(12),
-        border: const Border(
-          left: BorderSide(color: AppTheme.success, width: 4),
-          top: BorderSide(color: Colors.transparent),
-          right: BorderSide(color: Colors.transparent),
-          bottom: BorderSide(color: Colors.transparent),
-        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -489,6 +483,15 @@ class _BalanceScreenState extends State<BalanceScreen> {
       ),
       child: Row(
         children: [
+          Container(
+            width: 4,
+            height: 48,
+            decoration: BoxDecoration(
+              color: AppTheme.success,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(width: 16),
           Icon(Icons.celebration, color: AppTheme.success, size: 32),
           const SizedBox(width: 16),
           Expanded(
