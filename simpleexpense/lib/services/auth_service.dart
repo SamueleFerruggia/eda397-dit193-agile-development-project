@@ -31,6 +31,7 @@ class AuthService {
   }
 
   // Sign In
+  @override
   Future<User?> signIn({
     required String email,
     required String password,
@@ -47,6 +48,7 @@ class AuthService {
   }
 
   // Sign Out
+  @override
   Future<void> signOut() async {
     await _auth.signOut();
   }
