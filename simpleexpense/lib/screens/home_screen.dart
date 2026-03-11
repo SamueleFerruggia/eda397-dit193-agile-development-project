@@ -34,13 +34,15 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppTheme.primary,
-        title: const Text(
-          'Home',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.5,
+        title: Consumer<AuthProvider>(
+          builder: (context, authProvider, _) => Text(
+            'Welcome ${authProvider.currentUserName ?? 'User'}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.5,
+            ),
           ),
         ),
         actions: [
@@ -343,49 +345,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildGroupsView(BuildContext context) {
     return Column(
       children: [
-        // Account Header with Balance
-        Container(
-          color: AppTheme.primary,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Consumer<AuthProvider>(
-                        builder: (context, authProvider, _) => Text(
-                          authProvider.currentUserName ?? 'Account Name',
-                          style: const TextStyle(
-                            fontFamily: AppTheme.fontFamilyDisplay,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: AppTheme.textLight,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        '0 SEK | 0 SEK', // We will fix this global total later
-                        style: TextStyle(
-                          fontFamily: AppTheme.fontFamilyDisplay,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: AppTheme.textLight,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
         _buildGroupsList(context),
         // Bottom Bar
         Container(
@@ -394,123 +353,75 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(
             children: [
               Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primary,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: DropdownButton<String>(
-                    value: 'Group',
-                    isExpanded: true,
-                    underline: const SizedBox.shrink(),
-                    dropdownColor: AppTheme.primary,
-                    style: const TextStyle(
-                      fontFamily: AppTheme.fontFamilyDisplay,
-                      color: AppTheme.textLight,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const JoinGroupScreen(),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    width: 52,
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary,
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    icon: const Icon(
-                      Icons.arrow_drop_down,
-                      color: AppTheme.textLight,
-                    ),
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'Group',
-                        child: Text(
-                          'Sort by Group',
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.group_add,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        const SizedBox(height: 1),
+                        const Text(
+                          'Join Group',
                           style: TextStyle(
-                            fontFamily: AppTheme.fontFamilyDisplay,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
                             color: AppTheme.textLight,
-                            fontSize: 16,
                           ),
                         ),
-                      ),
-                      DropdownMenuItem(
-                        value: 'People',
-                        child: Text(
-                          'Sort by People',
-                          style: TextStyle(
-                            fontFamily: AppTheme.fontFamilyDisplay,
-                            color: AppTheme.textLight,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                    ],
-                    onChanged: (value) {},
+                      ],
+                    ),
                   ),
                 ),
               ),
               const SizedBox(width: 10),
-              GestureDetector(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const JoinGroupScreen()),
-                  );
-                },
-                child: Container(
-                  width: 52,
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primary,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.group_add,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                      const SizedBox(height: 1),
-                      const Text(
-                        'Join',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color: AppTheme.textLight,
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => CreateGroupStep1()),
+                    );
+                  },
+                  child: Container(
+                    width: 52,
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.add, color: Colors.white, size: 20),
+                        const SizedBox(height: 1),
+                        const Text(
+                          'Create Group',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            color: AppTheme.textLight,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              GestureDetector(
-                onTap: () {
-                  Navigator.of(
-                    context,
-                  ).push(MaterialPageRoute(builder: (_) => CreateGroupStep1()));
-                },
-                child: Container(
-                  width: 52,
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primary,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.add, color: Colors.white, size: 20),
-                      const SizedBox(height: 1),
-                      const Text(
-                        'Group',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color: AppTheme.textLight,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
