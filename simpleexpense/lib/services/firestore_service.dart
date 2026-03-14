@@ -670,6 +670,22 @@ class FirestoreService {
   }
 
   // --- SETTLE REQUESTS ---
+    /// Returns true if there is a pending settle request between two users in a group
+    Future<bool> hasPendingSettleRequest({
+      required String groupId,
+      required String fromUserId,
+      required String toUserId,
+    }) async {
+      final snapshot = await _db
+          .collection('settleRequests')
+          .where('groupId', isEqualTo: groupId)
+          .where('fromUserId', isEqualTo: fromUserId)
+          .where('toUserId', isEqualTo: toUserId)
+          .where('status', isEqualTo: 'pending')
+          .limit(1)
+          .get();
+      return snapshot.docs.isNotEmpty;
+    }
 
   Future<void> createSettleRequest({
     required String groupId,
